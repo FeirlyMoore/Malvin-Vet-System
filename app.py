@@ -1,578 +1,571 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+# app.py - полная исправленная версия
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, date
 import pandas as pd
-import csv
 import os
-import sys
-import codecs
-from functools import wraps  # ДОБАВЬТЕ ЭТУ СТРОКУ!
-
-# Устанавливаем UTF-8 кодировку для вывода в Windows
-if sys.platform == "win32":
-    try:
-        sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, 'strict')
-        sys.stderr = codecs.getwriter("utf-8")(sys.stderr.buffer, 'strict')
-    except:
-        pass
+import csv
+from io import StringIO
+from functools import wraps
+import traceback
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'malvin_secret_key_42'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
+app.secret_key = 'malvin_vet_secret_key_2024'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///malvin_vet.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER'] = 'uploads/'
-app.config['EMERGENCY_FOLDER'] = 'emergency_logs/'
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload
 
-# Создаем папки если их нет
+# Создаем папки
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-os.makedirs(app.config['EMERGENCY_FOLDER'], exist_ok=True)
+os.makedirs('emergency_logs', exist_ok=True)
 
 db = SQLAlchemy(app)
 
-# Модели базы данных
+# Модели
 class Doctor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    analyses = db.relationship('Analysis', backref='doctor', lazy=True)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+    analyses = db.relationship('Analysis', backref='doctor_ref', lazy=True, cascade='all, delete-orphan')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Analysis(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     client_surname = db.Column(db.String(100), nullable=False)
     pet_name = db.Column(db.String(100), nullable=False)
     analysis_type = db.Column(db.String(50), nullable=False)
-    status = db.Column(db.String(20), default='actual')  # 'actual' или 'processed'
-    called = db.Column(db.Boolean, default=False)
-    called_date = db.Column(db.DateTime, nullable=True)
-    created_date = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(20), default='actual')  # actual, processed
+    is_called = db.Column(db.Boolean, default=False)
+    call_date = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     doctor_id = db.Column(db.Integer, db.ForeignKey('doctor.id'), nullable=False)
-    notes = db.Column(db.Text, nullable=True)
+    notes = db.Column(db.Text)
+    
+    doctor = db.relationship('Doctor', backref='analysis_ref')
 
-# Функция инициализации базы данных
-def initialize_database():
-    with app.app_context():
-        db.create_all()
+# Создаем таблицы и начальные данные
+with app.app_context():
+    db.create_all()
+    
+    # Добавляем врачей если их нет
+    if Doctor.query.count() == 0:
+        initial_doctors = [
+            'Волков И.Р.',
+            'Федосов М.А.', 
+            'Шашурина Ю.Н',
+            'Олейник А.С.',
+            'Синюков С.С.',
+            'Соколова А.С',
+            'Гришина А.С.',
+            'Соловьев Д.Е.',
+            'Титова Н.И',
+            'Лочехина Е.А.',
+            'Зюков И.И.',
+            'Синюкова Е.В.',
+            'Макаренко В.А.',
+            'Без врача'
+        ]
         
-        # Проверяем, есть ли уже данные
-        if Doctor.query.count() == 0:
-            print("Инициализация базы данных...")
-            
-            # Список врачей из документа
-            doctors_list = [
-                'Волков И.Р.',
-                'Федосов М.А.',
-                'Шашурина Ю.Н',
-                'Олейник А.С.',
-                'Синюков С.С.',
-                'Соколова А.С',
-                'Гришина А.С.',
-                'Соловьев Д.Е.',
-                'Титова Н.И',
-                'Лочехина Е.А.',
-                'Зюков И.И.',
-                'Синюкова Е.В.',
-                'Макаренко В.А.',
-                'Без врача'
-            ]
-            
-            # Создаем врачей
-            for doc_name in doctors_list:
-                doctor = Doctor(name=doc_name)
-                db.session.add(doctor)
-            
-            db.session.commit()
-            
-            # Получаем ID врачей после commit
-            doctors = Doctor.query.all()
-            doctors_dict = {doctor.name: doctor.id for doctor in doctors}
-            
-            # Данные анализов из документа
-            analyses_data = [
-                ('Бруштейн', 'Джони', 'кр', 'Волков И.Р.'),
-                ('Улитина', 'Шони', 'м', 'Волков И.Р.'),
-                ('Оганян', 'Чиж', 'м', 'Волков И.Р.'),
-                ('Жукова', 'Кеша', 'кр, м', 'Волков И.Р.'),
-                ('Харитонова', 'Мила', 'ВЮ', 'Волков И.Р.'),
-                ('Русу', 'Цезарь', 'кр', 'Волков И.Р.'),
-                ('Запруднова', 'Муся', 'кр', 'Волков И.Р.'),
-                ('Белова', 'Энни', 'кр', 'Волков И.Р.'),
-                ('Казаркина', 'Ларри', 'м', 'Волков И.Р.'),
-                ('Карев', 'Яся', 'кр', 'Волков И.Р.'),
-                ('Гуринова', 'Лиза', 'кр', 'Волков И.Р.'),
-                ('Чистосердов', 'Амиго', 'ВЮ', 'Федосов М.А.'),
-                ('Михайлова', 'Дуся', 'ВТ', 'Федосов М.А.'),
-                ('Зубакова', 'Барсик', 'м', 'Федосов М.А.'),
-                ('Яснева', 'Тимон', 'кр', 'Федосов М.А.'),
-                ('Кузнецова', 'Жаклин', 'дерм', 'Шашурина Ю.Н'),
-                ('Гречина', 'Ася', 'кр', 'Шашурина Ю.Н'),
-                ('Ширяева', 'Моника', 'цито', 'Шашурина Ю.Н'),
-                ('Бабиков', 'Внисент', 'ВЮ', 'Шашурина Ю.Н'),
-                ('Кульман', 'Кеша', 'ди', 'Шашурина Ю.Н'),
-                ('Мудайар', 'Рагнар', 'ВЮ', 'Шашурина Ю.Н'),
-                ('Игонина', 'Муся', 'кр', 'Олейник А.С.'),
-                ('Гарнова', 'Соня', 'кр', 'Олейник А.С.'),
-                ('Солдатова', 'Черныш', 'ВЮ', 'Олейник А.С.'),
-                ('Харитонова', 'Мила', 'кр', 'Олейник А.С.'),
-                ('Капустина', 'Василий', 'кр, ВЮ', 'Олейник А.С.'),
-                ('Королева', 'Мира', 'кр', 'Олейник А.С.'),
-                ('Корнева', 'Айс', 'м, кр', 'Олейник А.С.'),
-                ('Сидоров', 'Тима', 'м, кр', 'Олейник А.С.'),
-                ('Медников', 'Рик', 'кр', 'Олейник А.С.'),
-                ('Хохлов', 'Федор', 'м', 'Олейник А.С.'),
-                ('Милеева', 'Мирон', 'ВЮ', 'Олейник А.С.'),
-                ('Яркова', 'Тень', 'ВЮ', 'Олейник А.С.'),
-                ('Кичерова', 'Мася', 'кр', 'Синюков С.С.'),
-                ('Корчемкина', 'Ласка', 'кр', 'Синюков С.С.'),
-                ('Евстигнеева', 'Нюша', 'кр', 'Синюков С.С.'),
-                ('Ерофеева', 'Жулик', 'кр', 'Синюков С.С.'),
-                ('Разгуляев', 'Матвей', 'кр', 'Синюков С.С.'),
-                ('Корнилова', 'Василиса', 'кр', 'Синюков С.С.'),
-                ('Кутякина', 'Глаша', 'кр', 'Синюков С.С.'),
-                ('Юркова', 'Пуша', 'м', 'Синюков С.С.'),
-                ('Чурахина', 'Миша', 'м', 'Соколова А.С'),
-                ('Соколова', 'Сеня', 'кр', 'Соколова А.С'),
-                ('Сироткина', 'Тоша', 'м', 'Соколова А.С'),
-                ('Чеботарева', 'Харли', 'ВЮ', 'Соколова А.С'),
-                ('Илларионова', 'Петя', 'кр', 'Соколова А.С'),
-                ('Пелевин', 'Фридрих', 'кр', 'Соколова А.С'),
-                ('Здор', 'Тигра', 'кр', 'Соколова А.С'),
-                ('Ибрагимова', 'Зефир', 'кал, кр', 'Соколова А.С'),
-                ('Медников', 'Рик', 'кр', 'Соколова А.С'),
-                ('Смелов', 'Оди', 'м', 'Без врача'),
-                ('Скрябина', 'Сема', 'м', 'Без врача'),
-                ('Потехина', 'Буля', 'м', 'Без врача'),
-                ('Замятин', 'Джина', 'ВЮ', 'Гришина А.С.'),
-                ('Боброва', 'Фрося', 'кал', 'Гришина А.С.'),
-                ('Леонов', 'Марс', 'кр', 'Гришина А.С.'),
-                ('Родионова', 'Рокси', 'кр', 'Гришина А.С.'),
-                ('Сумина', 'Лим', 'м', 'Гришина А.С.'),
-                ('Уткина', 'Масяня', 'кр', 'Гришина А.С.'),
-                ('Уткина', 'Персик', 'кр', 'Гришина А.С.'),
-                ('Волчонкова', 'Рыжик', 'кр', 'Гришина А.С.'),
-                ('Одаховский', 'Джек', 'кр', 'Гришина А.С.'),
-                ('Лысов', 'Виктор', 'кал', 'Гришина А.С.'),
-                ('Соколова', 'Ума', 'кр', 'Гришина А.С.'),
-                ('Сироткина', 'Айко', 'кр', 'Гришина А.С.'),
-                ('Королева', 'Мира', 'кр', 'Гришина А.С.'),
-                ('Хомутова', 'Петр', 'кр', 'Гришина А.С.'),
-                ('Глушков', 'Федор', 'м', 'Гришина А.С.'),
-                ('Полякова', 'Федора', 'м', 'Гришина А.С.'),
-                ('Мартиросян', 'Картье', 'ВЮ', 'Гришина А.С.'),
-                ('Сидоров', 'Тима', 'м', 'Гришина А.С.'),
-                ('Широков', 'Бронсон', 'кр', 'Гришина А.С.'),
-                ('Горынцева', 'Буся', 'кр', 'Гришина А.С.'),
-                ('Земскова', 'Дени', 'кр', 'Гришина А.С.'),
-                ('Широков', 'Бронсон', 'кр', 'Гришина А.С.'),
-                ('Арсеньева', 'Филти', 'кр', 'Гришина А.С.'),
-                ('Дайнеко', 'Максим', 'кр', 'Гришина А.С.'),
-                ('Земскова', 'Дени', 'кр', 'Гришина А.С.'),
-                ('Фионин', 'Хадижа', 'кр', 'Соловьев Д.Е.'),
-                ('Андреева', 'Стеша', 'кр', 'Титова Н.И'),
-                ('Кузнецова', 'Роза', 'кр', 'Титова Н.И'),
-                ('Гусева', 'Марси', 'ВЮ', 'Титова Н.И'),
-                ('Полякова', 'Федора', 'кр', 'Титова Н.И'),
-                ('Корнева', 'Айс', 'м', 'Титова Н.И'),
-                ('Мартынова', 'Персей', 'м', 'Титова Н.И'),
-                ('Шалыгина', 'Ричард', 'кал', 'Титова Н.И'),
-                ('Фонинский', 'Чешир', 'кр', 'Титова Н.И'),
-                ('Земскова', 'Дени', 'кр, м', 'Титова Н.И'),
-                ('Герц', 'Волк', 'кр', 'Лочехина Е.А.'),
-                ('Кутепова', 'Федор', 'кр', 'Лочехина Е.А.'),
-                ('Рябчикова', 'Васька', 'кр', 'Лочехина Е.А.'),
-                ('Карев', 'Яся', 'кр', 'Лочехина Е.А.'),
-                ('Бутенко', 'Масяня', 'кр', 'Лочехина Е.А.'),
-                ('Соловьев', 'Тима', 'кр', 'Лочехина Е.А.'),
-                ('Булюкин', 'Василиса', 'кр', 'Лочехина Е.А.'),
-                ('Кресниковский', 'Рой', 'кр', 'Лочехина Е.А.'),
-                ('Шлемина', 'Лулу', 'кр', 'Лочехина Е.А.'),
-                ('Меджидов', 'Симба', 'кр', 'Лочехина Е.А.'),
-                ('Рожкова', 'Юджин', 'кр', 'Лочехина Е.А.'),
-                ('Гаврилова', 'Мася', 'кр', 'Лочехина Е.А.'),
-                ('Потехина', 'Буля', 'кр', 'Лочехина Е.А.'),
-                ('Зайцева', 'Дина', 'кр', 'Лочехина Е.А.'),
-                ('Прохоров', 'Пух', 'кр', 'Лочехина Е.А.'),
-                ('Гурьева', 'Юки', 'кр', 'Лочехина Е.А.'),
-                ('Колесова', 'Усик', 'кр', 'Лочехина Е.А.'),
-                ('Колесникова', 'Макс', 'кр', 'Зюков И.И.'),
-                ('Клюев', 'Марсель?', 'кр', 'Зюков И.И.'),
-                ('Рыжова', 'Мила', 'кр', 'Зюков И.И.'),
-                ('Смолина', 'Пушок', 'кр', 'Зюков И.И.'),
-                ('Модина', 'Лексус', 'кр', 'Зюков И.И.'),
-                ('Новикова', 'Тихон', 'кр', 'Синюкова Е.В.'),
-                ('Данилова', 'Макс', 'кр, ВЮ', 'Синюкова Е.В.'),
-                ('Усова', 'Мона', 'кр', 'Синюкова Е.В.'),
-                ('Удовиков', 'Лиса', 'кр', 'Синюкова Е.В.'),
-                ('Чикалина', 'Бусинка', 'м', 'Синюкова Е.В.'),
-                ('Афонина', 'Лиза', 'кр', 'Синюкова Е.В.'),
-                ('Соколова', 'Базилик', 'кал', 'Синюкова Е.В.'),
-                ('Барановская', 'Тихон', 'кр', 'Синюкова Е.В.'),
-                ('Иванова', 'Филя', 'кр', 'Макаренко В.А.'),
-                ('Земскова', 'Дени', 'м', 'Макаренко В.А.'),
-            ]
-            
-            # Преобразуем сокращения в полные названия
-            def expand_analysis_type(abbr):
-                mapping = {
-                    'кр': 'Кровь',
-                    'м': 'Моча',
-                    'кал': 'Кал',
-                    'цито': 'Цитология',
-                    'ди': 'Диагностика',
-                    'дерм': 'Дерматология',
-                    'ВТ': 'Вет Юнион',
-                    'ВЮ': 'Вет Юнион'
-                }
-                
-                if ',' in abbr:
-                    parts = [p.strip() for p in abbr.split(',')]
-                    return ', '.join([mapping.get(p, p) for p in parts])
-                else:
-                    return mapping.get(abbr, abbr)
-            
-            # Добавляем анализы
-            for surname, pet_name, analysis_abbr, doctor_name in analyses_data:
-                if doctor_name in doctors_dict:
-                    analysis_type = expand_analysis_type(analysis_abbr)
-                    notes = f"Добавлено из документа 02.12.2025"
-                    
-                    analysis = Analysis(
-                        client_surname=surname,
-                        pet_name=pet_name,
-                        analysis_type=analysis_type,
-                        doctor_id=doctors_dict[doctor_name],
-                        notes=notes
-                    )
-                    db.session.add(analysis)
-            
-            db.session.commit()
-            print(f"[OK] Загружено {len(analyses_data)} анализов для {len(doctors_list)} врачей")
-        else:
-            print("[INFO] База данных уже инициализирована")
+        for doc_name in initial_doctors:
+            doctor = Doctor(name=doc_name)
+            db.session.add(doctor)
+        
+        db.session.commit()
+        print("✅ Созданы врачи по умолчанию")
 
 # Декоратор для проверки авторизации
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'logged_in' not in session:
+        if not session.get('logged_in'):
+            flash('Пожалуйста, войдите в систему', 'warning')
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
 
-# Система авторизации
+# Главная страница - логин
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if session.get('logged_in'):
+        return redirect(url_for('index'))
+    
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
         
         if username == 'Malvin_42' and password == '585188':
             session['logged_in'] = True
             session['username'] = username
-            flash('Вы успешно вошли в систему', 'success')
+            flash('Добро пожаловать в систему учета анализов!', 'success')
             return redirect(url_for('index'))
         else:
-            flash('Неверные учетные данные', 'danger')
+            flash('Неверные учетные данные. Логин: Malvin_42, Пароль: 585188', 'danger')
     
     return render_template('login.html')
 
 @app.route('/logout')
 def logout():
     session.clear()
-    flash('Вы вышли из системы', 'info')
+    flash('Вы успешно вышли из системы', 'info')
     return redirect(url_for('login'))
 
-# Главная страница с двумя вкладками
+# Главная страница - список анализов
 @app.route('/')
 @login_required
 def index():
-    with app.app_context():
-        actual_analyses = Analysis.query.filter_by(status='actual').order_by(Analysis.created_date.desc()).all()
-        processed_analyses = Analysis.query.filter_by(status='processed').order_by(Analysis.called_date.desc()).all()
-        doctors = Doctor.query.all()
+    try:
+        # Получаем фильтры
+        doctor_id = request.args.get('doctor_id', type=int)
+        status = request.args.get('status', 'actual')
+        search = request.args.get('search', '').strip()
+        
+        # Базовый запрос
+        query = Analysis.query
+        
+        # Применяем фильтры
+        if doctor_id:
+            query = query.filter_by(doctor_id=doctor_id)
+        
+        if status in ['actual', 'processed']:
+            query = query.filter_by(status=status)
+        
+        if search:
+            search_term = f"%{search}%"
+            query = query.filter(
+                db.or_(
+                    Analysis.client_surname.ilike(search_term),
+                    Analysis.pet_name.ilike(search_term),
+                    Analysis.analysis_type.ilike(search_term),
+                    Analysis.notes.ilike(search_term)
+                )
+            )
+        
+        # Сортировка
+        if status == 'actual':
+            analyses = query.order_by(Analysis.created_at.desc()).all()
+        else:
+            analyses = query.order_by(Analysis.call_date.desc()).all()
+        
+        # Получаем всех врачей для фильтра
+        doctors = Doctor.query.order_by(Doctor.name).all()
+        
+        # Статистика
+        total_analyses = Analysis.query.count()
+        actual_count = Analysis.query.filter_by(status='actual').count()
+        processed_count = Analysis.query.filter_by(status='processed').count()
         
         # Статистика по врачам
-        doctor_stats = {}
+        doctor_stats = []
         for doctor in doctors:
-            actual_count = Analysis.query.filter_by(doctor_id=doctor.id, status='actual').count()
-            processed_count = Analysis.query.filter_by(doctor_id=doctor.id, status='processed').count()
-            doctor_stats[doctor.id] = {
+            doctor_actual = Analysis.query.filter_by(doctor_id=doctor.id, status='actual').count()
+            doctor_processed = Analysis.query.filter_by(doctor_id=doctor.id, status='processed').count()
+            doctor_total = doctor_actual + doctor_processed
+            
+            if doctor_total > 0:
+                progress = int((doctor_processed / doctor_total) * 100)
+            else:
+                progress = 0
+                
+            doctor_stats.append({
+                'id': doctor.id,
                 'name': doctor.name,
-                'actual': actual_count,
-                'processed': processed_count,
-                'total': actual_count + processed_count
-            }
+                'actual': doctor_actual,
+                'processed': doctor_processed,
+                'total': doctor_total,
+                'progress': progress
+            })
         
-        return render_template('index.html', 
-                             actual_analyses=actual_analyses,
-                             processed_analyses=processed_analyses,
+        return render_template('index.html',
+                             analyses=analyses,
                              doctors=doctors,
-                             doctor_stats=doctor_stats)
+                             doctor_stats=doctor_stats,
+                             total_analyses=total_analyses,
+                             actual_count=actual_count,
+                             processed_count=processed_count,
+                             selected_doctor=doctor_id,
+                             selected_status=status,
+                             search_query=search)
+    
+    except Exception as e:
+        flash(f'Ошибка при загрузке данных: {str(e)}', 'danger')
+        return render_template('index.html', analyses=[], doctors=[], doctor_stats=[])
 
-# Отметка о звонке
-@app.route('/mark_called/<int:analysis_id>', methods=['POST'])
+# Отметить анализ как обработанный
+@app.route('/analysis/<int:analysis_id>/mark_called', methods=['POST'])
 @login_required
 def mark_called(analysis_id):
-    with app.app_context():
+    try:
         analysis = Analysis.query.get_or_404(analysis_id)
         
-        if not analysis.called:
-            analysis.called = True
+        if not analysis.is_called:
+            analysis.is_called = True
             analysis.status = 'processed'
-            analysis.called_date = datetime.utcnow()
+            analysis.call_date = datetime.utcnow()
             db.session.commit()
             
-            # Логирование в emergency файл
+            # Логируем в emergency файл
             log_emergency_call(analysis)
             
             flash(f'Анализ для {analysis.client_surname} ({analysis.pet_name}) отмечен как обработанный', 'success')
+        else:
+            flash('Этот анализ уже был обработан ранее', 'info')
+    
+    except Exception as e:
+        flash(f'Ошибка при отметке анализа: {str(e)}', 'danger')
     
     return redirect(url_for('index'))
 
 def log_emergency_call(analysis):
-    """Логирование информации о звонке в файл"""
-    timestamp = datetime.now().strftime('%Y-%m-%d')
-    filename = f"emergency_{timestamp}.txt"
-    filepath = os.path.join(app.config['EMERGENCY_FOLDER'], filename)
+    """Создает лог-файл с информацией о звонке"""
+    today = date.today().strftime('%Y-%m-%d')
+    filename = f'emergency_{today}.txt'
+    filepath = os.path.join('emergency_logs', filename)
     
-    # Добавляем в существующий файл или создаем новый
-    mode = 'a' if os.path.exists(filepath) else 'w'
+    log_entry = f"""
+{'='*60}
+ВРЕМЯ: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+ВЛАДЕЛЕЦ: {analysis.client_surname}
+КЛИЧКА: {analysis.pet_name}
+АНАЛИЗ: {analysis.analysis_type}
+ВРАЧ: {analysis.doctor.name if analysis.doctor else 'Не указан'}
+СТАТУС: Обработан
+{'='*60}
+"""
     
-    with open(filepath, mode, encoding='utf-8') as f:
-        f.write(f"\n{'='*60}\n")
-        f.write(f"ВРЕМЯ: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-        f.write(f"ВЛАДЕЛЕЦ: {analysis.client_surname}\n")
-        f.write(f"АНАЛИЗ: {analysis.analysis_type}\n")
-        f.write(f"КЛИЧКА: {analysis.pet_name}\n")
-        f.write(f"ВРАЧ: {analysis.doctor.name}\n")
-        f.write(f"СТАТУС: Обработан\n")
+    try:
+        with open(filepath, 'a', encoding='utf-8') as f:
+            f.write(log_entry)
+    except Exception as e:
+        print(f'Ошибка при записи лога: {e}')
 
-# Добавление нового анализа
-@app.route('/add_analysis', methods=['GET', 'POST'])
+# Добавить новый анализ
+@app.route('/analysis/add', methods=['GET', 'POST'])
 @login_required
 def add_analysis():
-    with app.app_context():
-        doctors = Doctor.query.all()
-        
-        if request.method == 'POST':
-            client_surname = request.form['client_surname']
-            pet_name = request.form['pet_name']
-            analysis_type = request.form['analysis_type']
-            doctor_id = request.form['doctor_id']
-            notes = request.form.get('notes', '')
+    doctors = Doctor.query.order_by(Doctor.name).all()
+    
+    if request.method == 'POST':
+        try:
+            client_surname = request.form.get('client_surname', '').strip()
+            pet_name = request.form.get('pet_name', '').strip()
+            analysis_type = request.form.get('analysis_type', '').strip()
+            doctor_id = request.form.get('doctor_id', type=int)
+            notes = request.form.get('notes', '').strip()
             
+            # Проверяем обязательные поля
+            if not client_surname or not pet_name or not analysis_type or not doctor_id:
+                flash('Пожалуйста, заполните все обязательные поля', 'danger')
+                return render_template('add_analysis.html', doctors=doctors)
+            
+            # Создаем новый анализ
             analysis = Analysis(
                 client_surname=client_surname,
                 pet_name=pet_name,
                 analysis_type=analysis_type,
                 doctor_id=doctor_id,
-                notes=notes
+                notes=notes,
+                status='actual',
+                is_called=False
             )
             
             db.session.add(analysis)
             db.session.commit()
             
-            flash('Анализ успешно добавлен', 'success')
+            flash(f'Анализ успешно добавлен для {client_surname} ({pet_name})', 'success')
             return redirect(url_for('index'))
         
-        return render_template('add_analysis.html', doctors=doctors)
+        except Exception as e:
+            flash(f'Ошибка при добавлении анализа: {str(e)}', 'danger')
+    
+    return render_template('add_analysis.html', doctors=doctors)
 
-# Редактирование анализа
-@app.route('/edit_analysis/<int:analysis_id>', methods=['GET', 'POST'])
+# Редактировать анализ
+@app.route('/analysis/<int:analysis_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_analysis(analysis_id):
-    with app.app_context():
-        analysis = Analysis.query.get_or_404(analysis_id)
-        doctors = Doctor.query.all()
-        
-        if request.method == 'POST':
-            analysis.client_surname = request.form['client_surname']
-            analysis.pet_name = request.form['pet_name']
-            analysis.analysis_type = request.form['analysis_type']
-            analysis.doctor_id = request.form['doctor_id']
-            analysis.notes = request.form.get('notes', '')
+    analysis = Analysis.query.get_or_404(analysis_id)
+    doctors = Doctor.query.order_by(Doctor.name).all()
+    
+    if request.method == 'POST':
+        try:
+            analysis.client_surname = request.form.get('client_surname', '').strip()
+            analysis.pet_name = request.form.get('pet_name', '').strip()
+            analysis.analysis_type = request.form.get('analysis_type', '').strip()
+            analysis.doctor_id = request.form.get('doctor_id', type=int)
+            analysis.notes = request.form.get('notes', '').strip()
             
             db.session.commit()
             
             flash('Анализ успешно обновлен', 'success')
             return redirect(url_for('index'))
         
-        return render_template('edit_analysis.html', analysis=analysis, doctors=doctors)
+        except Exception as e:
+            flash(f'Ошибка при обновлении анализа: {str(e)}', 'danger')
+    
+    return render_template('edit_analysis.html', analysis=analysis, doctors=doctors)
 
-# Удаление анализа
-@app.route('/delete_analysis/<int:analysis_id>')
+# Удалить анализ
+@app.route('/analysis/<int:analysis_id>/delete', methods=['POST'])
 @login_required
 def delete_analysis(analysis_id):
-    with app.app_context():
+    try:
         analysis = Analysis.query.get_or_404(analysis_id)
+        client_info = f"{analysis.client_surname} ({analysis.pet_name})"
+        
         db.session.delete(analysis)
         db.session.commit()
         
-        flash('Анализ успешно удален', 'success')
-        return redirect(url_for('index'))
+        flash(f'Анализ для {client_info} успешно удален', 'success')
+    
+    except Exception as e:
+        flash(f'Ошибка при удалении анализа: {str(e)}', 'danger')
+    
+    return redirect(url_for('index'))
 
-# Загрузка файла с анализами
+# Загрузка CSV файла
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
-def upload_file():
-    with app.app_context():
-        if request.method == 'POST':
-            if 'file' not in request.files:
-                flash('Файл не выбран', 'danger')
-                return redirect(request.url)
+def upload_csv():
+    if request.method == 'POST':
+        if 'csv_file' not in request.files:
+            flash('Файл не выбран', 'danger')
+            return redirect(url_for('upload_csv'))
+        
+        file = request.files['csv_file']
+        
+        if file.filename == '':
+            flash('Файл не выбран', 'danger')
+            return redirect(url_for('upload_csv'))
+        
+        if not file.filename.endswith('.csv'):
+            flash('Пожалуйста, загрузите CSV файл', 'danger')
+            return redirect(url_for('upload_csv'))
+        
+        try:
+            # Сохраняем файл
+            filename = f"upload_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
             
-            file = request.files['file']
+            # Читаем CSV
+            df = pd.read_csv(filepath, encoding='utf-8')
             
-            if file.filename == '':
-                flash('Файл не выбран', 'danger')
-                return redirect(request.url)
+            # Проверяем необходимые колонки
+            required_columns = ['Врач', 'Фамилия', 'Кличка', 'Анализ']
+            for col in required_columns:
+                if col not in df.columns:
+                    flash(f'В файле отсутствует обязательная колонка: {col}', 'danger')
+                    return redirect(url_for('upload_csv'))
             
-            if file and (file.filename.endswith('.csv') or file.filename.endswith('.txt')):
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-                file.save(filepath)
-                
+            added_count = 0
+            for _, row in df.iterrows():
                 try:
-                    if file.filename.endswith('.csv'):
-                        df = pd.read_csv(filepath, encoding='utf-8')
-                        
-                        for _, row in df.iterrows():
-                            doctor = Doctor.query.filter_by(name=row['Врач']).first()
-                            if not doctor:
-                                doctor = Doctor(name=row['Врач'])
-                                db.session.add(doctor)
-                                db.session.flush()
-                            
-                            analysis = Analysis(
-                                client_surname=row['Фамилия'],
-                                pet_name=row['Кличка'],
-                                analysis_type=row['Анализ'],
-                                doctor_id=doctor.id,
-                                notes=row.get('Примечания', '')
-                            )
-                            db.session.add(analysis)
-                        
-                        db.session.commit()
-                        flash(f'Успешно загружено {len(df)} анализов', 'success')
+                    # Находим или создаем врача
+                    doctor_name = str(row['Врач']).strip()
+                    doctor = Doctor.query.filter_by(name=doctor_name).first()
                     
-                except Exception as e:
-                    flash(f'Ошибка при обработке файла: {str(e)}', 'danger')
-                
-                return redirect(url_for('index'))
+                    if not doctor:
+                        doctor = Doctor(name=doctor_name)
+                        db.session.add(doctor)
+                        db.session.flush()
+                    
+                    # Создаем анализ
+                    analysis = Analysis(
+                        client_surname=str(row['Фамилия']).strip(),
+                        pet_name=str(row['Кличка']).strip(),
+                        analysis_type=str(row['Анализ']).strip(),
+                        doctor_id=doctor.id,
+                        notes=str(row.get('Примечания', '')).strip(),
+                        status='actual',
+                        is_called=False
+                    )
+                    
+                    db.session.add(analysis)
+                    added_count += 1
+                    
+                except Exception as row_error:
+                    print(f"Ошибка в строке {_}: {row_error}")
+                    continue
+            
+            db.session.commit()
+            flash(f'Успешно добавлено {added_count} анализов из {len(df)} строк', 'success')
+            
+        except Exception as e:
+            flash(f'Ошибка при обработке файла: {str(e)}', 'danger')
+            print(traceback.format_exc())
         
-        return render_template('upload.html')
-
-# Сброс всех анализов в актуальные
-@app.route('/reset_to_actual')
-@login_required
-def reset_to_actual():
-    """Возвращает все анализы в статус актуальных (для тестирования)"""
-    with app.app_context():
-        analyses = Analysis.query.all()
-        for analysis in analyses:
-            analysis.status = 'actual'
-            analysis.called = False
-            analysis.called_date = None
-        
-        db.session.commit()
-        flash('Все анализы сброшены в статус "Актуальные"', 'info')
         return redirect(url_for('index'))
+    
+    return render_template('upload.html')
 
-# Экспорт данных
-@app.route('/export_csv')
-@login_required
-def export_csv():
-    """Экспорт всех анализов в CSV"""
-    with app.app_context():
-        analyses = Analysis.query.all()
-        
-        csv_data = "Врач;Фамилия;Кличка;Анализ;Статус;Дата создания;Дата звонка;Примечания\n"
-        
-        for analysis in analyses:
-            csv_data += f"{analysis.doctor.name};{analysis.client_surname};{analysis.pet_name};"
-            csv_data += f"{analysis.analysis_type};{analysis.status};"
-            csv_data += f"{analysis.created_date.strftime('%d.%m.%Y %H:%M') if analysis.created_date else ''};"
-            csv_data += f"{analysis.called_date.strftime('%d.%m.%Y %H:%M') if analysis.called_date else ''};"
-            csv_data += f"{analysis.notes or ''}\n"
-        
-        return csv_data, 200, {
-            'Content-Type': 'text/csv',
-            'Content-Disposition': 'attachment; filename=analytics_export.csv'
-        }
-
-# Просмотр логов emergency
-@app.route('/view_logs')
+# Просмотр логов
+@app.route('/logs')
 @login_required
 def view_logs():
-    """Просмотр лог-файлов"""
     log_files = []
-    if os.path.exists(app.config['EMERGENCY_FOLDER']):
-        for filename in sorted(os.listdir(app.config['EMERGENCY_FOLDER'])):
+    logs_dir = 'emergency_logs'
+    
+    if os.path.exists(logs_dir):
+        for filename in sorted(os.listdir(logs_dir), reverse=True):
             if filename.startswith('emergency_') and filename.endswith('.txt'):
-                filepath = os.path.join(app.config['EMERGENCY_FOLDER'], filename)
-                with open(filepath, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                log_files.append({
-                    'filename': filename,
-                    'content': content,
-                    'size': len(content)
-                })
+                filepath = os.path.join(logs_dir, filename)
+                try:
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    
+                    # Подсчитываем количество записей
+                    record_count = content.count('ВЛАДЕЛЕЦ:')
+                    
+                    log_files.append({
+                        'filename': filename,
+                        'date': filename.replace('emergency_', '').replace('.txt', ''),
+                        'content': content,
+                        'record_count': record_count,
+                        'size': os.path.getsize(filepath)
+                    })
+                except Exception as e:
+                    print(f'Ошибка чтения файла {filename}: {e}')
     
     return render_template('logs.html', log_files=log_files)
 
-# API для получения статистики
+# Экспорт данных
+@app.route('/export')
+@login_required
+def export_data():
+    try:
+        analyses = Analysis.query.order_by(Analysis.created_at.desc()).all()
+        
+        # Создаем CSV в памяти
+        output = StringIO()
+        writer = csv.writer(output, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        
+        # Заголовки
+        writer.writerow([
+            'ID', 'Фамилия владельца', 'Кличка', 'Тип анализа',
+            'Статус', 'Обработан', 'Дата обработки', 'Врач',
+            'Примечания', 'Дата создания', 'Дата обновления'
+        ])
+        
+        # Данные
+        for analysis in analyses:
+            writer.writerow([
+                analysis.id,
+                analysis.client_surname,
+                analysis.pet_name,
+                analysis.analysis_type,
+                analysis.status,
+                'Да' if analysis.is_called else 'Нет',
+                analysis.call_date.strftime('%d.%m.%Y %H:%M') if analysis.call_date else '',
+                analysis.doctor.name if analysis.doctor else '',
+                analysis.notes or '',
+                analysis.created_at.strftime('%d.%m.%Y %H:%M'),
+                analysis.updated_at.strftime('%d.%m.%Y %H:%M')
+            ])
+        
+        output.seek(0)
+        
+        # Возвращаем файл
+        return send_file(
+            StringIO(output.getvalue()),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=f'analytics_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+        )
+    
+    except Exception as e:
+        flash(f'Ошибка при экспорте данных: {str(e)}', 'danger')
+        return redirect(url_for('index'))
+
+# API для статистики
 @app.route('/api/stats')
 @login_required
-def get_stats():
-    with app.app_context():
+def api_stats():
+    try:
         total = Analysis.query.count()
         actual = Analysis.query.filter_by(status='actual').count()
         processed = Analysis.query.filter_by(status='processed').count()
         
-        # Статистика по врачам
-        doctor_stats = []
-        doctors = Doctor.query.all()
-        for doctor in doctors:
-            actual_count = Analysis.query.filter_by(doctor_id=doctor.id, status='actual').count()
-            processed_count = Analysis.query.filter_by(doctor_id=doctor.id, status='processed').count()
-            doctor_stats.append({
-                'doctor': doctor.name,
-                'actual': actual_count,
-                'processed': processed_count,
-                'total': actual_count + processed_count
-            })
-        
         return jsonify({
-            'total': total,
-            'actual': actual,
-            'processed': processed,
-            'doctor_stats': doctor_stats
+            'success': True,
+            'data': {
+                'total': total,
+                'actual': actual,
+                'processed': processed,
+                'actual_percentage': int((actual / total * 100)) if total > 0 else 0
+            }
         })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+# Добавить врача
+@app.route('/doctor/add', methods=['POST'])
+@login_required
+def add_doctor():
+    try:
+        name = request.form.get('name', '').strip()
+        
+        if not name:
+            flash('Введите имя врача', 'danger')
+            return redirect(url_for('index'))
+        
+        # Проверяем, нет ли уже такого врача
+        existing = Doctor.query.filter_by(name=name).first()
+        if existing:
+            flash('Врач с таким именем уже существует', 'warning')
+            return redirect(url_for('index'))
+        
+        doctor = Doctor(name=name)
+        db.session.add(doctor)
+        db.session.commit()
+        
+        flash(f'Врач {name} успешно добавлен', 'success')
+    
+    except Exception as e:
+        flash(f'Ошибка при добавлении врача: {str(e)}', 'danger')
+    
+    return redirect(url_for('index'))
+
+# Сбросить все анализы в актуальные (для тестирования)
+@app.route('/reset_all')
+@login_required 
+def reset_all():
+    try:
+        analyses = Analysis.query.all()
+        for analysis in analyses:
+            analysis.status = 'actual'
+            analysis.is_called = False
+            analysis.call_date = None
+        
+        db.session.commit()
+        flash('Все анализы сброшены в статус "Актуальные"', 'info')
+    
+    except Exception as e:
+        flash(f'Ошибка при сбросе: {str(e)}', 'danger')
+    
+    return redirect(url_for('index'))
+
+# Обработка 404 ошибок
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('404.html'), 404
+
+# Обработка 500 ошибок  
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return render_template('500.html'), 500
 
 if __name__ == '__main__':
-    # Инициализируем базу данных при запуске
-    initialize_database()
+    with app.app_context():
+        db.create_all()
     
     print("=" * 60)
     print("Система учета анализов Malvin Vet")
     print("=" * 60)
-    
-    # Показываем статистику
-    with app.app_context():
-        doctors = Doctor.query.all()
-        print("Доступные врачи:")
-        for doctor in doctors:
-            count = Analysis.query.filter_by(doctor_id=doctor.id).count()
-            print(f"  - {doctor.name}: {count} анализов")
-        
-        total = Analysis.query.count()
-        actual = Analysis.query.filter_by(status='actual').count()
-        print(f"\nВсего анализов: {total}")
-        print(f"Актуальных: {actual}")
-        print(f"Обработанных: {total - actual}")
-    
-    print("\nДля доступа используйте:")
-    print("  Логин: Malvin_42")
-    print("  Пароль: 585188")
-    print("=" * 60)
-    print("\nСервер запущен: http://localhost:5000")
+    print("Сервер запущен: http://localhost:5000")
+    print("Логин: Malvin_42")
+    print("Пароль: 585188")
     print("=" * 60)
     
     app.run(debug=True, host='0.0.0.0', port=5000)
