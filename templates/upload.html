@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Загрузка файла - Malvin Vet</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            background-color: #27ae60;
+            color: white;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="bi bi-heart-pulse"></i>
+                <span class="ms-2">Учет анализов Malvin Vet</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i class="bi bi-upload"></i> Загрузка анализов из файла
+                        </h4>
+                    </div>
+                    
+                    <div class="card-body">
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <div class="alert alert-info">
+                            <h5><i class="bi bi-info-circle"></i> Формат файла</h5>
+                            <p class="mb-2">Загрузите CSV файл со следующими колонками (разделитель - запятая):</p>
+                            <ul class="mb-2">
+                                <li><strong>Врач</strong> - ФИО врача (если врач не существует, он будет создан автоматически)</li>
+                                <li><strong>Фамилия</strong> - Фамилия владельца животного</li>
+                                <li><strong>Кличка</strong> - Кличка животного</li>
+                                <li><strong>Анализ</strong> - Тип анализа (Кровь, Моча, Кал, Цитология, Гистология, Вет Юнион и т.д.)</li>
+                                <li><strong>Примечания</strong> - Дополнительная информация (необязательно)</li>
+                            </ul>
+                            <p class="mb-0"><small>Первая строка должна содержать заголовки колонок.</small></p>
+                        </div>
+
+                        <form method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
+                            <div class="mb-4">
+                                <label for="file" class="form-label fw-bold">
+                                    <i class="bi bi-file-earmark-arrow-up"></i> Выберите CSV файл
+                                </label>
+                                <input class="form-control form-control-lg" type="file" id="file" name="file" accept=".csv" required>
+                                <div class="form-text">
+                                    Поддерживаются только CSV файлы с кодировкой UTF-8
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left"></i> Назад к списку
+                                </a>
+                                
+                                <div>
+                                    <button type="reset" class="btn btn-warning me-2">
+                                        <i class="bi bi-arrow-clockwise"></i> Очистить
+                                    </button>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-cloud-upload"></i> Загрузить файл
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <hr class="my-4">
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">
+                                            <i class="bi bi-file-earmark-text"></i> Пример CSV файла
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <pre>Врач,Фамилия,Кличка,Анализ,Примечания
+Волков И.Р.,Смирнов,Барсик,Кровь,
+Федосов М.А.,Иванова,Мурка,Моча,Срочный анализ
+Шашурина Ю.Н,Петров,Шарик,Кал,
+Олейник А.С.,Сидорова,Рекс,Гистология,Повтор через месяц
+Синюков С.С.,Кузнецов,Пушистик,Вет Юнион,</pre>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">
+                                            <i class="bi bi-lightbulb"></i> Полезные советы
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <ul class="mb-0">
+                                            <li>Файл можно создать в Excel и сохранить как CSV</li>
+                                            <li>Убедитесь, что в файле нет пустых строк в начале</li>
+                                            <li>Если врач уже существует в системе, анализ будет добавлен к нему</li>
+                                            <li>Новые врачи создаются автоматически</li>
+                                            <li>Все анализы загружаются со статусом "Актуальный"</li>
+                                            <li>После загрузки файл сохраняется в папке uploads/</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-warning mt-3">
+                            <h6><i class="bi bi-exclamation-triangle"></i> Важно!</h6>
+                            <ul class="mb-0">
+                                <li>Перед загрузкой больших файлов рекомендуется сделать резервную копию</li>
+                                <li>Если возникла ошибка, проверьте формат файла и кодировку</li>
+                                <li>Дублирующие анализы (одинаковые ФИО, кличка и врач) могут создавать дубликаты</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer text-muted">
+                        <small>
+                            <i class="bi bi-database"></i> 
+                            Текущая статистика: 
+                            {{ doctor_stats.values()|sum(attribute='total') }} анализов, 
+                            {{ doctors|length }} врачей
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Показываем имя выбранного файла
+        document.getElementById('file').addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name || 'Файл не выбран';
+            const label = document.querySelector('label[for="file"]');
+            label.innerHTML = `<i class="bi bi-file-earmark-arrow-up"></i> Выбран файл: <strong>${fileName}</strong>`;
+        });
+        
+        // Подтверждение очистки формы
+        document.querySelector('button[type="reset"]').addEventListener('click', function() {
+            if (!confirm('Очистить форму загрузки?')) {
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>

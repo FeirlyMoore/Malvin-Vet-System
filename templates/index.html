@@ -1,0 +1,112 @@
+<!-- Добавить в навигацию вкладок после существующих вкладок -->
+<li class="nav-item" role="presentation">
+    <button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button">
+        Статистика <span class="badge bg-info">{{ doctor_stats.values()|sum(attribute='total') }}</span>
+    </button>
+</li>
+
+<!-- Добавить новую вкладку в content -->
+<div class="tab-pane fade" id="stats" role="tabpanel">
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="bi bi-bar-chart"></i> Статистика по врачам</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Врач</th>
+                            <th>Всего анализов</th>
+                            <th>Актуальные</th>
+                            <th>Обработанные</th>
+                            <th>Прогресс</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doctor in doctors %}
+                            {% set stats = doctor_stats[doctor.id] %}
+                            <tr>
+                                <td><strong>{{ doctor.name }}</strong></td>
+                                <td>{{ stats.total }}</td>
+                                <td>
+                                    <span class="badge bg-warning">{{ stats.actual }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">{{ stats.processed }}</span>
+                                </td>
+                                <td>
+                                    {% if stats.total > 0 %}
+                                        {% set progress = (stats.processed / stats.total * 100)|round %}
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-success" role="progressbar" 
+                                                 style="width: {{ progress }}%" 
+                                                 aria-valuenow="{{ progress }}" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100">
+                                                {{ progress }}%
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">Нет данных</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-primary">
+                            <td><strong>Итого:</strong></td>
+                            <td>{{ doctor_stats.values()|sum(attribute='total') }}</td>
+                            <td>{{ doctor_stats.values()|sum(attribute='actual') }}</td>
+                            <td>{{ doctor_stats.values()|sum(attribute='processed') }}</td>
+                            <td>
+                                {% set total_all = doctor_stats.values()|sum(attribute='total') %}
+                                {% set processed_all = doctor_stats.values()|sum(attribute='processed') %}
+                                {% if total_all > 0 %}
+                                    {% set progress_all = (processed_all / total_all * 100)|round %}
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-primary" role="progressbar" 
+                                             style="width: {{ progress_all }}%" 
+                                             aria-valuenow="{{ progress_all }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                            {{ progress_all }}%
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h1 class="display-4 text-primary">{{ doctor_stats.values()|sum(attribute='total') }}</h1>
+                            <p class="card-text">Всего анализов</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h1 class="display-4 text-warning">{{ doctor_stats.values()|sum(attribute='actual') }}</h1>
+                            <p class="card-text">Актуальных</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h1 class="display-4 text-success">{{ doctor_stats.values()|sum(attribute='processed') }}</h1>
+                            <p class="card-text">Обработанных</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

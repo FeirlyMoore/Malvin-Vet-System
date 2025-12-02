@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Логи звонков - Malvin Vet</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .accordion-button:not(.collapsed) {
+            background-color: #e8f4fd;
+            color: #0c63e4;
+        }
+        pre {
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+            line-height: 1.4;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .log-file {
+            border-left: 4px solid #3498db;
+            padding-left: 10px;
+        }
+        .empty-logs {
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="bi bi-heart-pulse"></i>
+                <span class="ms-2">Учет анализов Malvin Vet</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3>
+                    <i class="bi bi-journal-text"></i> Логи звонков
+                </h3>
+                <p class="text-muted mb-0">
+                    История всех отметок о звонках клиентам
+                </p>
+            </div>
+            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> На главную
+            </a>
+        </div>
+
+        {% if log_files %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                Файлы логов создаются автоматически при отметке звонков. Каждый день создается новый файл.
+            </div>
+            
+            <div class="accordion" id="logsAccordion">
+                {% for log in log_files %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading{{ loop.index }}">
+                        <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" 
+                                type="button" 
+                                data-bs-toggle="collapse" 
+                                data-bs-target="#collapse{{ loop.index }}"
+                                aria-expanded="{{ 'true' if loop.first else 'false' }}"
+                                aria-controls="collapse{{ loop.index }}">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi bi-file-text me-2"></i>
+                                    <strong>{{ log.filename }}</strong>
+                                </div>
+                                <div>
+                                    <span class="badge bg-secondary me-2">{{ log.size }} байт</span>
+                                    <span class="badge bg-info">
+                                        {{ log.content.count('ВЛАДЕЛЕЦ:') }} записей
+                                    </span>
+                                </div>
+                            </div>
+                        </button>
+                    </h2>
+                    
+                    <div id="collapse{{ loop.index }}" 
+                         class="accordion-collapse collapse {% if loop.first %}show{% endif %}" 
+                         aria-labelledby="heading{{ loop.index }}"
+                         data-bs-parent="#logsAccordion">
+                        <div class="accordion-body">
+                            <div class="d-flex justify-content-between mb-3">
+                                <div>
+                                    <button class="btn btn-sm btn-outline-primary me-2" 
+                                            onclick="copyToClipboard('log-content-{{ loop.index }}')">
+                                        <i class="bi bi-clipboard"></i> Копировать
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success"
+                                            onclick="downloadLog('{{ log.filename }}', '{{ log.content }}')">
+                                        <i class="bi bi-download"></i> Скачать
+                                    </button>
+                                </div>
+                                <div>
+                                    <small class="text-muted">
+                                        Последнее изменение: {{ log.filename|replace('emergency_', '')|replace('.txt', '') }}
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <pre id="log-content-{{ loop.index }}">{{ log.content }}</pre>
+                            
+                            {% if log.content.count('ВЛАДЕЛЕЦ:') > 0 %}
+                                <div class="card mt-3">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">Статистика файла</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <ul class="mb-0">
+                                                    <li>Всего записей: {{ log.content.count('ВЛАДЕЛЕЦ:') }}</li>
+                                                    <li>Уникальных клиентов: {{ log.content.split('ВЛАДЕЛЕЦ:')|unique|length }}</li>
+                                                </ul>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <ul class="mb-0">
+                                                    <li>Первая запись: {{ log.content.split('ВРЕМЯ:')[1].split('\n')[0].strip() if log.content.split('ВРЕМЯ:')[1] else 'Н/Д' }}</li>
+                                                    <li>Последняя запись: {{ log.content.split('ВРЕМЯ:')[-1].split('\n')[0].strip() if log.content.split('ВРЕМЯ:')[-1] else 'Н/Д' }}</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5><i class="bi bi-database"></i> Информация о логах</h5>
+                    <ul class="mb-0">
+                        <li>Логи хранятся в папке <code>emergency_logs/</code></li>
+                        <li>Каждый день создается новый файл с именем <code>emergency_ГГГГ-ММ-ДД.txt</code></li>
+                        <li>Файлы сохраняются даже после перезапуска сервера</li>
+                        <li>Для очистки логов удалите файлы из папки вручную</li>
+                        <li>Общий размер логов: {{ log_files|sum(attribute='size') }} байт</li>
+                    </ul>
+                </div>
+            </div>
+            
+        {% else %}
+            <div class="card">
+                <div class="card-body empty-logs">
+                    <div class="text-center">
+                        <i class="bi bi-journal-x display-1 text-muted mb-3"></i>
+                        <h4>Лог-файлы не найдены</h4>
+                        <p class="text-muted">
+                            Логи появятся после того, как врачи начнут отмечать звонки.
+                        </p>
+                        <div class="mt-3">
+                            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                                <i class="bi bi-arrow-left"></i> Вернуться к анализам
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Копирование содержимого лога в буфер обмена
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent || element.innerText;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Лог скопирован в буфер обмена!');
+            }).catch(err => {
+                console.error('Ошибка копирования:', err);
+                alert('Не удалось скопировать лог');
+            });
+        }
+        
+        // Скачивание лог-файла
+        function downloadLog(filename, content) {
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+        
+        // Фильтрация уникальных значений для шаблона
+        function unique(arr) {
+            return Array.from(new Set(arr));
+        }
+        
+        // Автоматическое обновление страницы каждые 30 секунд (опционально)
+        setTimeout(() => {
+            window.location.reload();
+        }, 30000);
+    </script>
+</body>
+</html>
