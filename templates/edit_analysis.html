@@ -1,237 +1,812 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Редактировать анализ - Malvin Vet</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <title>Редактировать анализ - Malvin Vet Analytics</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <!-- Кастомные стили -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
     <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        :root {
+            --malvin-blue: #1a365d;
+            --malvin-light-blue: #2c5282;
+            --malvin-accent: #38b2ac;
+            --malvin-success: #48bb78;
+            --malvin-warning: #ed8936;
         }
-        .card {
+        
+        .form-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .form-card {
+            border-radius: 15px;
             border: none;
-            border-radius: 10px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
-        .card-header {
-            background-color: #2c3e50;
+        
+        .form-header {
+            background: linear-gradient(135deg, var(--malvin-blue) 0%, var(--malvin-light-blue) 100%);
             color: white;
-            border-radius: 10px 10px 0 0 !important;
-            padding: 15px 20px;
+            padding: 2rem;
         }
-        .btn-primary {
-            background-color: #3498db;
-            border-color: #3498db;
+        
+        .form-body {
+            padding: 2rem;
+            background-color: #f8fafc;
         }
-        .btn-primary:hover {
-            background-color: #2980b9;
-            border-color: #2980b9;
+        
+        .required-field::after {
+            content: " *";
+            color: #dc3545;
+        }
+        
+        .form-section {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .form-section-title {
+            color: var(--malvin-blue);
+            border-bottom: 2px solid var(--malvin-accent);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .analysis-info-card {
+            border-left: 4px solid var(--malvin-accent);
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+        
+        .status-badge {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        .btn-mark-called {
+            background: linear-gradient(135deg, var(--malvin-success) 0%, #38a169 100%);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-mark-called:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(72, 187, 120, 0.3);
+        }
+        
+        .btn-save {
+            background: linear-gradient(135deg, var(--malvin-accent) 0%, #319795 100%);
+            border: none;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(56, 178, 172, 0.3);
+        }
+        
+        .analysis-type-badge {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+        
+        .analysis-type-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .analysis-type-badge.active {
+            border-color: var(--malvin-accent);
+            box-shadow: 0 0 0 3px rgba(56, 178, 172, 0.2);
+        }
+        
+        .info-row {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0.75rem 0;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            color: #4a5568;
+            font-weight: 500;
+            min-width: 150px;
+        }
+        
+        .info-value {
+            color: #2d3748;
+            font-weight: 600;
+        }
+        
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #e2e8f0;
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--malvin-accent);
+            border: 2px solid white;
+            box-shadow: 0 0 0 3px rgba(56, 178, 172, 0.2);
+        }
+        
+        .validation-message {
+            font-size: 0.85rem;
+            color: #dc3545;
+            display: none;
         }
     </style>
 </head>
 <body>
     <!-- Навигация -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('index') }}">
-                <i class="bi bi-heart-pulse"></i>
-                <span class="ms-2">Учет анализов Malvin Vet</span>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, var(--malvin-blue) 0%, var(--malvin-light-blue) 100%);">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-heart-pulse fs-3 me-2"></i>
+                    <div>
+                        <span class="fw-bold">Malvin Vet</span>
+                        <small class="d-block opacity-75" style="font-size: 0.8rem;">Analytics System</small>
+                    </div>
+                </div>
             </a>
+            
             <div class="navbar-nav ms-auto">
                 <a class="nav-link" href="{{ url_for('index') }}">
-                    <i class="bi bi-house-door"></i> На главную
+                    <i class="bi bi-arrow-left me-1"></i>Назад к списку
                 </a>
             </div>
         </div>
     </nav>
 
     <!-- Основной контент -->
-    <div class="container mt-4">
-        <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h4 class="mb-0">
-                            <i class="bi bi-pencil-square"></i> Редактировать анализ
-                        </h4>
-                    </div>
-                    
-                    <div class="card-body">
-                        {% with messages = get_flashed_messages(with_categories=true) %}
-                            {% if messages %}
-                                {% for category, message in messages %}
-                                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                        {{ message }}
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                    </div>
-                                {% endfor %}
+    <div class="container py-5">
+        <div class="form-container">
+            <!-- Форма -->
+            <div class="form-card">
+                <!-- Заголовок -->
+                <div class="form-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="mb-2">
+                                <i class="bi bi-pencil-square display-5"></i>
+                            </div>
+                            <h1 class="h3 mb-1">Редактировать анализ</h1>
+                            <p class="mb-0 opacity-75">ID анализа: #{{ analysis.id }}</p>
+                        </div>
+                        
+                        <!-- Статус анализа -->
+                        <div class="text-end">
+                            <div class="status-badge {% if analysis.status == 'processed' %}bg-success{% else %}bg-warning{% endif %} mb-2">
+                                <i class="bi bi-{% if analysis.status == 'processed' %}check-circle{% else %}clock{% endif %} me-1"></i>
+                                {% if analysis.status == 'processed' %}
+                                    Обработан
+                                {% else %}
+                                    Актуальный
+                                {% endif %}
+                            </div>
+                            
+                            {% if analysis.status == 'actual' %}
+                            <form method="POST" action="{{ url_for('mark_called', analysis_id=analysis.id) }}" 
+                                  class="d-inline" onsubmit="return confirmMarkCalled()">
+                                <button type="submit" class="btn btn-mark-called">
+                                    <i class="bi bi-telephone me-2"></i>Отметить звонок
+                                </button>
+                            </form>
                             {% endif %}
-                        {% endwith %}
-
-                        <form method="POST" action="{{ url_for('edit_analysis', analysis_id=analysis.id) }}">
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="client_surname" class="form-label">
-                                        <i class="bi bi-person"></i> Фамилия владельца *
-                                    </label>
-                                    <input type="text" class="form-control" id="client_surname" 
-                                           name="client_surname" value="{{ analysis.client_surname }}" 
-                                           required autofocus>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Тело формы -->
+                <div class="form-body">
+                    <!-- Уведомления -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show mb-4" role="alert">
+                                    <i class="bi bi-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                                 </div>
-                                
-                                <div class="col-md-6">
-                                    <label for="pet_name" class="form-label">
-                                        <i class="bi bi-heart"></i> Кличка животного *
-                                    </label>
-                                    <input type="text" class="form-control" id="pet_name" 
-                                           name="pet_name" value="{{ analysis.pet_name }}" required>
-                                </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="analysis_type" class="form-label">
-                                        <i class="bi bi-clipboard-data"></i> Тип анализа *
-                                    </label>
-                                    <select class="form-select" id="analysis_type" name="analysis_type" required>
-                                        <option value="">Выберите тип анализа</option>
-                                        <option value="Кровь" {% if analysis.analysis_type == 'Кровь' %}selected{% endif %}>Кровь</option>
-                                        <option value="Моча" {% if analysis.analysis_type == 'Моча' %}selected{% endif %}>Моча</option>
-                                        <option value="Кал" {% if analysis.analysis_type == 'Кал' %}selected{% endif %}>Кал</option>
-                                        <option value="Цитология" {% if analysis.analysis_type == 'Цитология' %}selected{% endif %}>Цитология</option>
-                                        <option value="Гистология" {% if analysis.analysis_type == 'Гистология' %}selected{% endif %}>Гистология</option>
-                                        <option value="Дерматология" {% if analysis.analysis_type == 'Дерматология' %}selected{% endif %}>Дерматология</option>
-                                        <option value="Диагностика" {% if analysis.analysis_type == 'Диагностика' %}selected{% endif %}>Диагностика</option>
-                                        <option value="Вет Юнион" {% if analysis.analysis_type == 'Вет Юнион' %}selected{% endif %}>Вет Юнион</option>
-                                        {% if analysis.analysis_type not in ['Кровь', 'Моча', 'Кал', 'Цитология', 'Гистология', 'Дерматология', 'Диагностика', 'Вет Юнион'] %}
-                                            <option value="{{ analysis.analysis_type }}" selected>{{ analysis.analysis_type }}</option>
-                                        {% endif %}
-                                    </select>
-                                    <div class="form-text">
-                                        Если в списке нет нужного типа, выберите "Выберите тип анализа" и введите вручную
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <div class="row">
+                        <!-- Левая колонка - форма -->
+                        <div class="col-lg-8">
+                            <form method="POST" action="{{ url_for('edit_analysis', analysis_id=analysis.id) }}" id="editAnalysisForm" novalidate>
+                                <!-- Основная информация -->
+                                <div class="form-section">
+                                    <h3 class="form-section-title">
+                                        <i class="bi bi-card-checklist me-2"></i>Основная информация
+                                    </h3>
+                                    
+                                    <div class="row g-3">
+                                        <!-- Фамилия владельца -->
+                                        <div class="col-md-6">
+                                            <label for="client_surname" class="form-label required-field">
+                                                <i class="bi bi-person-badge me-1"></i>Фамилия владельца
+                                            </label>
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   id="client_surname" 
+                                                   name="client_surname" 
+                                                   value="{{ analysis.client_surname }}"
+                                                   required
+                                                   placeholder="Введите фамилию владельца">
+                                            <div class="validation-message" id="surnameError">
+                                                Пожалуйста, введите фамилию владельца
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Кличка животного -->
+                                        <div class="col-md-6">
+                                            <label for="pet_name" class="form-label required-field">
+                                                <i class="bi bi-heart me-1"></i>Кличка животного
+                                            </label>
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   id="pet_name" 
+                                                   name="pet_name" 
+                                                   value="{{ analysis.pet_name }}"
+                                                   required
+                                                   placeholder="Введите кличку животного">
+                                            <div class="validation-message" id="petNameError">
+                                                Пожалуйста, введите кличку животного
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 
-                                <div class="col-md-6">
-                                    <label for="doctor_id" class="form-label">
-                                        <i class="bi bi-person-badge"></i> Врач *
-                                    </label>
-                                    <select class="form-select" id="doctor_id" name="doctor_id" required>
-                                        <option value="">Выберите врача</option>
-                                        {% for doctor in doctors %}
-                                            <option value="{{ doctor.id }}" 
-                                                {% if doctor.id == analysis.doctor_id %}selected{% endif %}>
-                                                {{ doctor.name }}
+                                <!-- Тип анализа -->
+                                <div class="form-section">
+                                    <h3 class="form-section-title">
+                                        <i class="bi bi-clipboard-data me-2"></i>Тип анализа
+                                    </h3>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label required-field">Выберите тип анализа</label>
+                                        
+                                        <!-- Быстрый выбор типов -->
+                                        <div class="d-flex flex-wrap mb-4" id="analysisTypeQuickSelect">
+                                            {% set analysis_types = [
+                                                {'value': 'Кровь', 'color': 'danger', 'icon': 'droplet'},
+                                                {'value': 'Моча', 'color': 'primary', 'icon': 'water'},
+                                                {'value': 'Кал', 'color': 'warning', 'icon': 'bucket'},
+                                                {'value': 'Цитология', 'color': 'info', 'icon': 'microscope'},
+                                                {'value': 'Гистология', 'color': 'success', 'icon': 'file-medical'},
+                                                {'value': 'Вет Юнион', 'color': 'secondary', 'icon': 'building'},
+                                                {'value': 'Другое', 'color': 'dark', 'icon': 'question-circle'}
+                                            ] %}
+                                            
+                                            {% for type in analysis_types %}
+                                            <div class="analysis-type-badge bg-{{ type.color }} text-white"
+                                                 data-value="{{ type.value }}"
+                                                 onclick="selectAnalysisType('{{ type.value }}')"
+                                                 {% if analysis.analysis_type == type.value %}style="border-color: var(--malvin-accent); box-shadow: 0 0 0 3px rgba(56, 178, 172, 0.2);"{% endif %}>
+                                                <i class="bi bi-{{ type.icon }} me-1"></i>
+                                                {{ type.value }}
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        
+                                        <!-- Выпадающий список -->
+                                        <select class="form-select" id="analysis_type" name="analysis_type" required>
+                                            <option value="" disabled>Выберите тип анализа из списка...</option>
+                                            {% for type in analysis_types %}
+                                            <option value="{{ type.value }}" {% if analysis.analysis_type == type.value %}selected{% endif %}>
+                                                {{ type.value }}
                                             </option>
-                                        {% endfor %}
-                                    </select>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="validation-message" id="analysisTypeError">
+                                            Пожалуйста, выберите тип анализа
+                                        </div>
+                                        
+                                        <!-- Поле для другого типа -->
+                                        <div class="mt-3" id="customTypeField" style="display: none;">
+                                            <label for="custom_analysis_type" class="form-label">
+                                                Укажите свой тип анализа
+                                            </label>
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   id="custom_analysis_type" 
+                                                   name="custom_analysis_type"
+                                                   placeholder="Введите тип анализа">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Врач и примечания -->
+                                <div class="form-section">
+                                    <h3 class="form-section-title">
+                                        <i class="bi bi-person-heart me-2"></i>Дополнительная информация
+                                    </h3>
+                                    
+                                    <div class="row g-3">
+                                        <!-- Выбор врача -->
+                                        <div class="col-md-6">
+                                            <label for="doctor_id" class="form-label required-field">
+                                                <i class="bi bi-person-badge me-1"></i>Лечащий врач
+                                            </label>
+                                            <select class="form-select" id="doctor_id" name="doctor_id" required>
+                                                <option value="" disabled>Выберите врача из списка...</option>
+                                                {% for doctor in doctors %}
+                                                <option value="{{ doctor.id }}" {% if doctor.id == analysis.doctor_id %}selected{% endif %}>
+                                                    {{ doctor.name }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                            <div class="validation-message" id="doctorError">
+                                                Пожалуйста, выберите врача
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Примечания -->
+                                        <div class="col-md-6">
+                                            <label for="notes" class="form-label">
+                                                <i class="bi bi-chat-left-text me-1"></i>Примечания
+                                            </label>
+                                            <textarea class="form-control" 
+                                                      id="notes" 
+                                                      name="notes" 
+                                                      rows="4"
+                                                      placeholder="Дополнительная информация, комментарии, особенности...">{{ analysis.notes or '' }}</textarea>
+                                            <small class="text-muted">Необязательное поле</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Кнопки действий -->
+                                <div class="d-flex justify-content-between pt-4 border-top">
+                                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                                        <i class="bi bi-x-circle me-2"></i>Отмена
+                                    </a>
+                                    
+                                    <div class="d-flex gap-2">
+                                        <button type="reset" class="btn btn-outline-warning">
+                                            <i class="bi bi-arrow-clockwise me-2"></i>Сбросить изменения
+                                        </button>
+                                        <button type="submit" class="btn btn-save">
+                                            <i class="bi bi-save me-2"></i>Сохранить изменения
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Правая колонка - информация -->
+                        <div class="col-lg-4">
+                            <!-- Карточка с информацией -->
+                            <div class="card analysis-info-card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title mb-3">
+                                        <i class="bi bi-info-circle me-2"></i>Информация об анализе
+                                    </h5>
+                                    
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">Статус:</span>
+                                        <span class="info-value">
+                                            {% if analysis.status == 'processed' %}
+                                                <span class="badge bg-success">Обработан</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Актуальный</span>
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">ID:</span>
+                                        <span class="info-value">#{{ analysis.id }}</span>
+                                    </div>
+                                    
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">Создан:</span>
+                                        <span class="info-value">
+                                            {% if analysis.created_at %}
+                                                {{ analysis.created_at.strftime('%d.%m.%Y %H:%M') }}
+                                            {% else %}
+                                                Не указано
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">Обновлен:</span>
+                                        <span class="info-value">
+                                            {% if analysis.updated_at %}
+                                                {{ analysis.updated_at.strftime('%d.%m.%Y %H:%M') }}
+                                            {% else %}
+                                                Не указано
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    
+                                    {% if analysis.status == 'processed' and analysis.call_date %}
+                                    <div class="info-row d-flex">
+                                        <span class="info-label">Обработан:</span>
+                                        <span class="info-value">
+                                            {{ analysis.call_date.strftime('%d.%m.%Y %H:%M') }}
+                                        </span>
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
-
-                            <div class="mb-3">
-                                <label for="notes" class="form-label">
-                                    <i class="bi bi-chat-left-text"></i> Примечания
-                                </label>
-                                <textarea class="form-control" id="notes" name="notes" rows="3" 
-                                          placeholder="Дополнительная информация...">{{ analysis.notes or '' }}</textarea>
+                            
+                            <!-- Таймлайн событий -->
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title mb-3">
+                                        <i class="bi bi-clock-history me-2"></i>История
+                                    </h5>
+                                    
+                                    <div class="timeline">
+                                        <!-- Создание -->
+                                        <div class="timeline-item">
+                                            <div class="small text-muted mb-1">
+                                                {{ analysis.created_at.strftime('%d.%m.%Y %H:%M') }}
+                                            </div>
+                                            <div class="fw-medium">
+                                                <i class="bi bi-plus-circle me-1 text-success"></i>
+                                                Анализ создан
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Обработка (если есть) -->
+                                        {% if analysis.status == 'processed' and analysis.call_date %}
+                                        <div class="timeline-item">
+                                            <div class="small text-muted mb-1">
+                                                {{ analysis.call_date.strftime('%d.%m.%Y %H:%M') }}
+                                            </div>
+                                            <div class="fw-medium">
+                                                <i class="bi bi-telephone me-1 text-primary"></i>
+                                                Отмечен звонок клиенту
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <!-- Текущее редактирование -->
+                                        <div class="timeline-item">
+                                            <div class="small text-muted mb-1">
+                                                Сейчас
+                                            </div>
+                                            <div class="fw-medium">
+                                                <i class="bi bi-pencil me-1 text-warning"></i>
+                                                Редактирование
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-
-                            <div class="mb-3">
-                                <div class="card bg-light">
-                                    <div class="card-body py-2">
-                                        <small class="text-muted">
-                                            <i class="bi bi-info-circle"></i>
-                                            <strong>Информация об анализе:</strong><br>
-                                            Создан: {{ analysis.created_date.strftime('%d.%m.%Y %H:%M') }}<br>
-                                            Статус: 
-                                            {% if analysis.status == 'actual' %}
-                                                <span class="badge bg-warning">Актуальный</span>
+                            
+                            <!-- Подсказки -->
+                            <div class="alert alert-info">
+                                <div class="d-flex">
+                                    <div class="me-2">
+                                        <i class="bi bi-lightbulb"></i>
+                                    </div>
+                                    <div>
+                                        <small>
+                                            <strong>Важно:</strong> После сохранения изменений анализ останется 
+                                            {% if analysis.status == 'processed' %}
+                                                в статусе "Обработан".
                                             {% else %}
-                                                <span class="badge bg-success">Обработан</span>
-                                            {% endif %}
-                                            {% if analysis.called_date %}
-                                                <br>Дата звонка: {{ analysis.called_date.strftime('%d.%m.%Y %H:%M') }}
+                                                в статусе "Актуальный".
                                             {% endif %}
                                         </small>
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="d-flex justify-content-between mt-4">
-                                <a href="{{ url_for('index') }}" class="btn btn-secondary">
-                                    <i class="bi bi-arrow-left"></i> Отмена
-                                </a>
-                                
-                                <div>
-                                    {% if analysis.status == 'actual' %}
-                                        <a href="{{ url_for('mark_called', analysis_id=analysis.id) }}" 
-                                           class="btn btn-success me-2"
-                                           onclick="return confirm('Отметить как обработанный?')">
-                                            <i class="bi bi-telephone"></i> Отметить звонок
-                                        </a>
-                                    {% endif %}
-                                    
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-save"></i> Сохранить изменения
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    
-                    <div class="card-footer text-muted">
-                        <small>
-                            <i class="bi bi-shield-check"></i> Все изменения сохраняются в базе данных
-                        </small>
+                        </div>
                     </div>
                 </div>
-                
-                <!-- Дополнительная информация -->
-                <div class="card mt-3">
-                    <div class="card-body">
-                        <h6><i class="bi bi-lightbulb"></i> Подсказки:</h6>
-                        <ul class="mb-0">
-                            <li>Поля отмеченные * обязательны для заполнения</li>
-                            <li>При изменении врача анализ будет перемещен в соответствующую группу</li>
-                            <li>Для отметки звонка используйте кнопку "Отметить звонок"</li>
-                            <li>После сохранения анализ останется в том же статусе (актуальный/обработанный)</li>
-                        </ul>
-                    </div>
+            </div>
+            
+            <!-- Предупреждение об удалении -->
+            <div class="card border-danger mt-4">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-danger mb-3">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Опасная зона
+                    </h6>
+                    <p class="text-muted mb-3">
+                        Удаление анализа невозможно отменить. Все данные будут безвозвратно удалены.
+                    </p>
+                    <form method="POST" action="{{ url_for('delete_analysis', analysis_id=analysis.id) }}" 
+                          onsubmit="return confirmDelete()">
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class="bi bi-trash me-2"></i>Удалить этот анализ
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Футер -->
+    <footer class="mt-5 py-3" style="background: linear-gradient(135deg, var(--malvin-blue) 0%, var(--malvin-light-blue) 100%);">
+        <div class="container">
+            <div class="text-center text-light">
+                <i class="bi bi-heart-pulse me-2"></i>
+                <strong>Malvin Vet Analytics System</strong>
+                <small class="d-block opacity-75 mt-1">© 2024 Система учета анализов</small>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Кастомный JS -->
     <script>
-        // Автоматический фокус на первом поле
+        // Инициализация при загрузке
         document.addEventListener('DOMContentLoaded', function() {
+            // Проверяем, если тип анализа "Другое"
+            const currentType = document.getElementById('analysis_type').value;
+            const customField = document.getElementById('customTypeField');
+            
+            if (currentType === 'Другое') {
+                customField.style.display = 'block';
+                document.getElementById('custom_analysis_type').required = true;
+            }
+            
+            // Автофокус на первом поле
             document.getElementById('client_surname').focus();
         });
         
-        // Подтверждение перед отметкой звонка
-        function confirmMarkCalled() {
-            return confirm('Вы уверены, что хотите отметить этот анализ как обработанный?\nЭто переместит его в раздел "Проработанные".');
+        // Выбор типа анализа через быстрые кнопки
+        function selectAnalysisType(type) {
+            const selectElement = document.getElementById('analysis_type');
+            const customField = document.getElementById('customTypeField');
+            const badges = document.querySelectorAll('.analysis-type-badge');
+            
+            // Сбрасываем активные бейджи
+            badges.forEach(badge => {
+                badge.style.borderColor = 'transparent';
+                badge.style.boxShadow = 'none';
+                if (badge.getAttribute('data-value') === type) {
+                    badge.style.borderColor = 'var(--malvin-accent)';
+                    badge.style.boxShadow = '0 0 0 3px rgba(56, 178, 172, 0.2)';
+                }
+            });
+            
+            // Устанавливаем значение в select
+            selectElement.value = type;
+            
+            // Показываем/скрываем поле для другого типа
+            if (type === 'Другое') {
+                customField.style.display = 'block';
+                document.getElementById('custom_analysis_type').required = true;
+            } else {
+                customField.style.display = 'none';
+                document.getElementById('custom_analysis_type').required = false;
+            }
+            
+            // Скрываем сообщение об ошибке
+            document.getElementById('analysisTypeError').style.display = 'none';
+            selectElement.classList.remove('is-invalid');
         }
         
-        // Динамическое изменение типа анализа
-        const analysisTypeSelect = document.getElementById('analysis_type');
-        analysisTypeSelect.addEventListener('change', function() {
-            if (this.value === '') {
-                // Пользователь хочет ввести свой тип
-                const customType = prompt('Введите тип анализа:');
-                if (customType && customType.trim() !== '') {
-                    // Создаем новый option
-                    const newOption = document.createElement('option');
-                    newOption.value = customType.trim();
-                    newOption.textContent = customType.trim();
-                    newOption.selected = true;
-                    this.appendChild(newOption);
-                    this.value = customType.trim();
+        // Подтверждение отметки звонка
+        function confirmMarkCalled() {
+            const clientName = document.getElementById('client_surname').value;
+            const petName = document.getElementById('pet_name').value;
+            
+            return confirm(`Вы уверены, что хотите отметить анализ для ${clientName} (${petName}) как обработанный?\n\nПосле этого анализ переместится в раздел "Проработанные".`);
+        }
+        
+        // Подтверждение удаления
+        function confirmDelete() {
+            const clientName = document.getElementById('client_surname').value;
+            const petName = document.getElementById('pet_name').value;
+            
+            return confirm(`ВНИМАНИЕ: Вы собираетесь УДАЛИТЬ анализ для ${clientName} (${petName}).\n\nЭто действие невозможно отменить. Все данные будут безвозвратно удалены.\n\nПродолжить?`);
+        }
+        
+        // Валидация формы
+        document.getElementById('editAnalysisForm').addEventListener('submit', function(event) {
+            let isValid = true;
+            const form = event.target;
+            
+            // Проверка обязательных полей
+            const requiredFields = [
+                { id: 'client_surname', errorId: 'surnameError' },
+                { id: 'pet_name', errorId: 'petNameError' },
+                { id: 'analysis_type', errorId: 'analysisTypeError' },
+                { id: 'doctor_id', errorId: 'doctorError' }
+            ];
+            
+            requiredFields.forEach(field => {
+                const element = document.getElementById(field.id);
+                const errorElement = document.getElementById(field.errorId);
+                
+                if (!element.value || element.value === '') {
+                    isValid = false;
+                    element.classList.add('is-invalid');
+                    errorElement.style.display = 'block';
+                } else {
+                    element.classList.remove('is-invalid');
+                    errorElement.style.display = 'none';
                 }
+            });
+            
+            // Проверка кастомного типа анализа
+            const analysisType = document.getElementById('analysis_type').value;
+            if (analysisType === 'Другое') {
+                const customType = document.getElementById('custom_analysis_type');
+                if (!customType.value || customType.value === '') {
+                    isValid = false;
+                    customType.classList.add('is-invalid');
+                    customType.focus();
+                    return false;
+                }
+            }
+            
+            if (!isValid) {
+                event.preventDefault();
+                event.stopPropagation();
+                
+                // Прокрутка к первой ошибке
+                const firstError = document.querySelector('.is-invalid');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstError.focus();
+                }
+                
+                return false;
+            }
+            
+            // Если тип анализа "Другое", меняем значение
+            if (analysisType === 'Другое') {
+                const customType = document.getElementById('custom_analysis_type');
+                document.getElementById('analysis_type').value = customType.value;
+            }
+            
+            // Показываем индикатор загрузки
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Сохранение...';
+            submitBtn.disabled = true;
+            
+            // Восстанавливаем кнопку через 3 секунды (на случай ошибки)
+            setTimeout(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }, 3000);
+        });
+        
+        // Сброс формы
+        document.querySelector('button[type="reset"]').addEventListener('click', function() {
+            if (confirm('Вы уверены, что хотите сбросить все изменения? Введенные данные будут потеряны.')) {
+                // Восстанавливаем исходные значения
+                const originalType = '{{ analysis.analysis_type }}';
+                const originalDoctorId = {{ analysis.doctor_id }};
+                
+                // Сбрасываем активные бейджи
+                const badges = document.querySelectorAll('.analysis-type-badge');
+                badges.forEach(badge => {
+                    badge.style.borderColor = 'transparent';
+                    badge.style.boxShadow = 'none';
+                    if (badge.getAttribute('data-value') === originalType) {
+                        badge.style.borderColor = 'var(--malvin-accent)';
+                        badge.style.boxShadow = '0 0 0 3px rgba(56, 178, 172, 0.2)';
+                    }
+                });
+                
+                // Восстанавливаем выпадающие списки
+                document.getElementById('analysis_type').value = originalType;
+                document.getElementById('doctor_id').value = originalDoctorId;
+                
+                // Обрабатываем поле "Другое"
+                if (originalType === 'Другое') {
+                    document.getElementById('customTypeField').style.display = 'block';
+                } else {
+                    document.getElementById('customTypeField').style.display = 'none';
+                }
+                
+                // Скрываем сообщения об ошибках
+                const errorMessages = document.querySelectorAll('.validation-message');
+                errorMessages.forEach(msg => msg.style.display = 'none');
+                
+                // Сбрасываем классы ошибок
+                const invalidFields = document.querySelectorAll('.is-invalid');
+                invalidFields.forEach(field => field.classList.remove('is-invalid'));
+            }
+        });
+        
+        // Обработка изменений в select типа анализа
+        document.getElementById('analysis_type').addEventListener('change', function() {
+            const type = this.value;
+            const customField = document.getElementById('customTypeField');
+            const badges = document.querySelectorAll('.analysis-type-badge');
+            
+            // Обновляем активные бейджи
+            badges.forEach(badge => {
+                badge.style.borderColor = 'transparent';
+                badge.style.boxShadow = 'none';
+                if (badge.getAttribute('data-value') === type) {
+                    badge.style.borderColor = 'var(--malvin-accent)';
+                    badge.style.boxShadow = '0 0 0 3px rgba(56, 178, 172, 0.2)';
+                }
+            });
+            
+            // Показываем/скрываем поле для другого типа
+            if (type === 'Другое') {
+                customField.style.display = 'block';
+                document.getElementById('custom_analysis_type').required = true;
+            } else {
+                customField.style.display = 'none';
+                document.getElementById('custom_analysis_type').required = false;
+            }
+        });
+        
+        // Отслеживание изменений в форме
+        let formChanged = false;
+        const form = document.getElementById('editAnalysisForm');
+        const initialFormData = new FormData(form);
+        
+        form.addEventListener('input', function() {
+            formChanged = true;
+        });
+        
+        form.addEventListener('submit', function() {
+            formChanged = false;
+        });
+        
+        window.addEventListener('beforeunload', function(e) {
+            if (formChanged) {
+                e.preventDefault();
+                e.returnValue = 'У вас есть несохраненные изменения. Вы уверены, что хотите покинуть страницу?';
             }
         });
     </script>

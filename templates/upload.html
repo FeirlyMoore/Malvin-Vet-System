@@ -3,183 +3,569 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Загрузка файла - Malvin Vet</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <title>Загрузка CSV - Malvin Vet</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
     <style>
         body {
-            background-color: #f8f9fa;
+            background-color: #f8fafc;
         }
-        .card {
+        
+        .upload-container {
+            max-width: 900px;
+            margin: 2rem auto;
+        }
+        
+        .upload-card {
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
             border: none;
-            border-radius: 10px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
+        
         .card-header {
-            background-color: #27ae60;
+            background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
             color: white;
-            border-radius: 10px 10px 0 0 !important;
+            border-radius: 12px 12px 0 0 !important;
+            padding: 1.5rem;
         }
-        pre {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            border: 1px solid #dee2e6;
-            font-size: 14px;
+        
+        .file-drop-area {
+            border: 3px dashed #cbd5e0;
+            border-radius: 10px;
+            padding: 3rem 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background-color: #f7fafc;
+            cursor: pointer;
+        }
+        
+        .file-drop-area:hover, .file-drop-area.dragover {
+            border-color: #4299e1;
+            background-color: #ebf8ff;
+        }
+        
+        .file-drop-icon {
+            font-size: 3rem;
+            color: #a0aec0;
+            margin-bottom: 1rem;
+        }
+        
+        .file-drop-area:hover .file-drop-icon,
+        .file-drop-area.dragover .file-drop-icon {
+            color: #4299e1;
+        }
+        
+        .file-info {
+            background-color: #edf2f7;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        .example-table {
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .example-table th {
+            background-color: #2c5282;
+            color: white;
+            font-weight: 500;
+            padding: 0.75rem;
+        }
+        
+        .example-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .example-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .instructions-list li {
+            margin-bottom: 0.5rem;
+            padding-left: 0.5rem;
+        }
+        
+        .btn-upload {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            border: none;
+            padding: 0.75rem 2rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-upload:hover {
+            background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+        }
+        
+        .btn-upload:disabled {
+            background: #cbd5e0;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .validation-error {
+            color: #e53e3e;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        
+        .success-icon {
+            color: #48bb78;
+            font-size: 1.25rem;
+        }
+        
+        .error-icon {
+            color: #e53e3e;
+            font-size: 1.25rem;
         }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('index') }}">
-                <i class="bi bi-heart-pulse"></i>
-                <span class="ms-2">Учет анализов Malvin Vet</span>
+                <i class="bi bi-heart-pulse me-2"></i>
+                Malvin Vet Analytics
             </a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="{{ url_for('index') }}">
+                    <i class="bi bi-arrow-left me-1"></i> Назад к списку
+                </a>
+            </div>
         </div>
     </nav>
 
-    <div class="container mt-4">
-        <div class="row justify-content-center">
-            <div class="col-md-10">
-                <div class="card">
-                    <div class="card-header">
-                        <h4 class="mb-0">
-                            <i class="bi bi-upload"></i> Загрузка анализов из файла
-                        </h4>
+    <!-- Основной контент -->
+    <div class="container py-4">
+        <div class="upload-container">
+            <!-- Карточка загрузки -->
+            <div class="upload-card card mb-4">
+                <!-- Заголовок -->
+                <div class="card-header">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="bi bi-cloud-upload display-6"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-1">Загрузка анализов из CSV файла</h4>
+                            <p class="mb-0 opacity-75">Массовое добавление анализов из CSV файла</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Тело формы -->
+                <div class="card-body p-4">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show mb-4" role="alert">
+                                    {% if category == 'success' %}
+                                        <i class="bi bi-check-circle success-icon me-2"></i>
+                                    {% elif category == 'danger' %}
+                                        <i class="bi bi-exclamation-triangle error-icon me-2"></i>
+                                    {% else %}
+                                        <i class="bi bi-info-circle me-2"></i>
+                                    {% endif %}
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <!-- Область загрузки файла -->
+                    <div class="file-drop-area mb-4" id="fileDropArea">
+                        <div class="file-drop-icon">
+                            <i class="bi bi-cloud-arrow-up"></i>
+                        </div>
+                        <h5 class="mb-2">Перетащите CSV файл сюда</h5>
+                        <p class="text-muted mb-3">или нажмите для выбора файла</p>
+                        <input type="file" id="csvFile" name="csv_file" accept=".csv" class="d-none" required>
+                        <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('csvFile').click()">
+                            <i class="bi bi-folder2-open me-2"></i>Выбрать файл
+                        </button>
+                        <div class="validation-error" id="fileError">
+                            Пожалуйста, выберите CSV файл
+                        </div>
                     </div>
                     
-                    <div class="card-body">
-                        {% with messages = get_flashed_messages(with_categories=true) %}
-                            {% if messages %}
-                                {% for category, message in messages %}
-                                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                        {{ message }}
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                    </div>
-                                {% endfor %}
-                            {% endif %}
-                        {% endwith %}
-
-                        <div class="alert alert-info">
-                            <h5><i class="bi bi-info-circle"></i> Формат файла</h5>
-                            <p class="mb-2">Загрузите CSV файл со следующими колонками (разделитель - запятая):</p>
-                            <ul class="mb-2">
-                                <li><strong>Врач</strong> - ФИО врача (если врач не существует, он будет создан автоматически)</li>
-                                <li><strong>Фамилия</strong> - Фамилия владельца животного</li>
-                                <li><strong>Кличка</strong> - Кличка животного</li>
-                                <li><strong>Анализ</strong> - Тип анализа (Кровь, Моча, Кал, Цитология, Гистология, Вет Юнион и т.д.)</li>
-                                <li><strong>Примечания</strong> - Дополнительная информация (необязательно)</li>
-                            </ul>
-                            <p class="mb-0"><small>Первая строка должна содержать заголовки колонок.</small></p>
+                    <!-- Информация о выбранном файле -->
+                    <div class="file-info" id="fileInfo">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-file-earmark-text me-2"></i>
+                                <span id="fileName"></span>
+                                <small class="text-muted d-block" id="fileSize"></small>
+                            </div>
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeFile()">
+                                <i class="bi bi-x"></i>
+                            </button>
                         </div>
-
-                        <form method="POST" action="{{ url_for('upload_file') }}" enctype="multipart/form-data">
-                            <div class="mb-4">
-                                <label for="file" class="form-label fw-bold">
-                                    <i class="bi bi-file-earmark-arrow-up"></i> Выберите CSV файл
+                    </div>
+                    
+                    <!-- Форма -->
+                    <form method="POST" action="{{ url_for('upload_csv') }}" enctype="multipart/form-data" id="uploadForm">
+                        <input type="hidden" id="selectedFile" name="csv_file">
+                        
+                        <!-- Опции загрузки -->
+                        <div class="mb-4">
+                            <h6 class="mb-3">
+                                <i class="bi bi-gear me-2"></i>Настройки загрузки
+                            </h6>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="skipDuplicates" name="skip_duplicates" checked>
+                                <label class="form-check-label" for="skipDuplicates">
+                                    Пропускать дубликаты (анализы с одинаковыми данными)
                                 </label>
-                                <input class="form-control form-control-lg" type="file" id="file" name="file" accept=".csv" required>
-                                <div class="form-text">
-                                    Поддерживаются только CSV файлы с кодировкой UTF-8
-                                </div>
                             </div>
-
-                            <div class="d-flex justify-content-between">
-                                <a href="{{ url_for('index') }}" class="btn btn-secondary">
-                                    <i class="bi bi-arrow-left"></i> Назад к списку
-                                </a>
-                                
-                                <div>
-                                    <button type="reset" class="btn btn-warning me-2">
-                                        <i class="bi bi-arrow-clockwise"></i> Очистить
-                                    </button>
-                                    <button type="submit" class="btn btn-success">
-                                        <i class="bi bi-cloud-upload"></i> Загрузить файл
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-
-                        <hr class="my-4">
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-header bg-light">
-                                        <h6 class="mb-0">
-                                            <i class="bi bi-file-earmark-text"></i> Пример CSV файла
-                                        </h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <pre>Врач,Фамилия,Кличка,Анализ,Примечания
-Волков И.Р.,Смирнов,Барсик,Кровь,
-Федосов М.А.,Иванова,Мурка,Моча,Срочный анализ
-Шашурина Ю.Н,Петров,Шарик,Кал,
-Олейник А.С.,Сидорова,Рекс,Гистология,Повтор через месяц
-Синюков С.С.,Кузнецов,Пушистик,Вет Юнион,</pre>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-header bg-light">
-                                        <h6 class="mb-0">
-                                            <i class="bi bi-lightbulb"></i> Полезные советы
-                                        </h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <ul class="mb-0">
-                                            <li>Файл можно создать в Excel и сохранить как CSV</li>
-                                            <li>Убедитесь, что в файле нет пустых строк в начале</li>
-                                            <li>Если врач уже существует в системе, анализ будет добавлен к нему</li>
-                                            <li>Новые врачи создаются автоматически</li>
-                                            <li>Все анализы загружаются со статусом "Актуальный"</li>
-                                            <li>После загрузки файл сохраняется в папке uploads/</li>
-                                        </ul>
-                                    </div>
-                                </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="autoCreateDoctors" name="auto_create_doctors" checked>
+                                <label class="form-check-label" for="autoCreateDoctors">
+                                    Автоматически создавать новых врачей если их нет в системе
+                                </label>
                             </div>
                         </div>
                         
-                        <div class="alert alert-warning mt-3">
-                            <h6><i class="bi bi-exclamation-triangle"></i> Важно!</h6>
-                            <ul class="mb-0">
-                                <li>Перед загрузкой больших файлов рекомендуется сделать резервную копию</li>
-                                <li>Если возникла ошибка, проверьте формат файла и кодировку</li>
-                                <li>Дублирующие анализы (одинаковые ФИО, кличка и врач) могут создавать дубликаты</li>
+                        <!-- Кнопки -->
+                        <div class="d-flex justify-content-between pt-3 border-top">
+                            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-1"></i> Отмена
+                            </a>
+                            <button type="submit" class="btn btn-upload" id="uploadBtn" disabled>
+                                <i class="bi bi-cloud-arrow-up me-2"></i> Загрузить файл
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Инструкции -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Инструкция по формату CSV файла
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Обязательные колонки:</h6>
+                            <ul class="instructions-list">
+                                <li><strong>Врач</strong> - ФИО врача (например: "Волков И.Р.")</li>
+                                <li><strong>Фамилия</strong> - Фамилия владельца животного</li>
+                                <li><strong>Кличка</strong> - Кличка животного</li>
+                                <li><strong>Анализ</strong> - Тип анализа (Кровь, Моча, Кал и т.д.)</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Дополнительные колонки:</h6>
+                            <ul class="instructions-list">
+                                <li><strong>Примечания</strong> - Дополнительная информация</li>
+                                <li>Колонки могут быть в любом порядке</li>
+                                <li>Разделитель - запятая</li>
+                                <li>Кодировка - UTF-8</li>
                             </ul>
                         </div>
                     </div>
                     
-                    <div class="card-footer text-muted">
-                        <small>
-                            <i class="bi bi-database"></i> 
-                            Текущая статистика: 
-                            {{ doctor_stats.values()|sum(attribute='total') }} анализов, 
-                            {{ doctors|length }} врачей
-                        </small>
+                    <div class="alert alert-info mt-3">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="bi bi-lightbulb"></i>
+                            </div>
+                            <div>
+                                <h6 class="alert-heading mb-2">Советы:</h6>
+                                <ul class="mb-0">
+                                    <li>Файл можно создать в Excel и сохранить как CSV</li>
+                                    <li>Убедитесь, что в файле нет пустых строк в начале</li>
+                                    <li>Если врач не существует в системе, он будет создан автоматически</li>
+                                    <li>Все анализы загружаются со статусом "Актуальный"</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Пример CSV файла -->
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-earmark-text me-2"></i>Пример CSV файла
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="example-table table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Врач</th>
+                                    <th>Фамилия</th>
+                                    <th>Кличка</th>
+                                    <th>Анализ</th>
+                                    <th>Примечания</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Волков И.Р.</td>
+                                    <td>Смирнов</td>
+                                    <td>Барсик</td>
+                                    <td>Кровь</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Федосов М.А.</td>
+                                    <td>Иванова</td>
+                                    <td>Мурка</td>
+                                    <td>Моча</td>
+                                    <td>Срочный анализ</td>
+                                </tr>
+                                <tr>
+                                    <td>Шашурина Ю.Н</td>
+                                    <td>Петров</td>
+                                    <td>Шарик</td>
+                                    <td>Кал</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Олейник А.С.</td>
+                                    <td>Сидорова</td>
+                                    <td>Рекс</td>
+                                    <td>Гистология</td>
+                                    <td>Повтор через месяц</td>
+                                </tr>
+                                <tr>
+                                    <td>Синюков С.С.</td>
+                                    <td>Кузнецов</td>
+                                    <td>Пушистик</td>
+                                    <td>Вет Юнион</td>
+                                    <td>Анализ из сторонней лаборатории</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Скачать пример -->
+                    <div class="text-center mt-3">
+                        <button type="button" class="btn btn-outline-primary" onclick="downloadExample()">
+                            <i class="bi bi-download me-2"></i>Скачать пример CSV файла
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Футер -->
+    <footer class="mt-5 py-3" style="background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);">
+        <div class="container">
+            <div class="text-center text-light">
+                <i class="bi bi-heart-pulse me-2"></i>
+                <strong>Malvin Vet Analytics System</strong>
+                <small class="d-block opacity-75 mt-1">© 2024 Система учета анализов</small>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Кастомный JS -->
     <script>
-        // Показываем имя выбранного файла
-        document.getElementById('file').addEventListener('change', function(e) {
-            const fileName = e.target.files[0]?.name || 'Файл не выбран';
-            const label = document.querySelector('label[for="file"]');
-            label.innerHTML = `<i class="bi bi-file-earmark-arrow-up"></i> Выбран файл: <strong>${fileName}</strong>`;
+        // Элементы DOM
+        const fileInput = document.getElementById('csvFile');
+        const fileDropArea = document.getElementById('fileDropArea');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const fileError = document.getElementById('fileError');
+        const selectedFileInput = document.getElementById('selectedFile');
+        
+        // Обработка выбора файла
+        fileInput.addEventListener('change', function(e) {
+            if (this.files.length > 0) {
+                handleFile(this.files[0]);
+            }
         });
         
-        // Подтверждение очистки формы
-        document.querySelector('button[type="reset"]').addEventListener('click', function() {
-            if (!confirm('Очистить форму загрузки?')) {
+        // Drag & Drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            fileDropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileDropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileDropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            fileDropArea.classList.add('dragover');
+        }
+        
+        function unhighlight() {
+            fileDropArea.classList.remove('dragover');
+        }
+        
+        // Обработка сброса файла
+        fileDropArea.addEventListener('drop', function(e) {
+            const dt = e.dataTransfer;
+            const file = dt.files[0];
+            if (file && file.name.endsWith('.csv')) {
+                fileInput.files = dt.files;
+                handleFile(file);
+            } else {
+                showError('Пожалуйста, выберите CSV файл');
+            }
+        }, false);
+        
+        // Обработка файла
+        function handleFile(file) {
+            if (!file.name.endsWith('.csv')) {
+                showError('Пожалуйста, выберите CSV файл');
+                return;
+            }
+            
+            // Скрываем ошибку
+            hideError();
+            
+            // Показываем информацию о файле
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileInfo.style.display = 'block';
+            
+            // Активируем кнопку загрузки
+            uploadBtn.disabled = false;
+            
+            // Сохраняем файл в скрытом поле
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            selectedFileInput.value = dataTransfer.files[0].name;
+        }
+        
+        // Удаление файла
+        function removeFile() {
+            fileInput.value = '';
+            fileInfo.style.display = 'none';
+            uploadBtn.disabled = true;
+            selectedFileInput.value = '';
+        }
+        
+        // Форматирование размера файла
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // Показать ошибку
+        function showError(message) {
+            fileError.textContent = message;
+            fileError.style.display = 'block';
+            fileDropArea.style.borderColor = '#e53e3e';
+        }
+        
+        // Скрыть ошибку
+        function hideError() {
+            fileError.style.display = 'none';
+            fileDropArea.style.borderColor = '#cbd5e0';
+        }
+        
+        // Валидация формы
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            if (!fileInput.files.length) {
+                e.preventDefault();
+                showError('Пожалуйста, выберите CSV файл');
+                fileDropArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return false;
             }
+            
+            const file = fileInput.files[0];
+            if (!file.name.endsWith('.csv')) {
+                e.preventDefault();
+                showError('Пожалуйста, выберите CSV файл с расширением .csv');
+                return false;
+            }
+            
+            // Показываем индикатор загрузки
+            uploadBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i> Загрузка...';
+            uploadBtn.disabled = true;
+        });
+        
+        // Скачать пример CSV файла
+        function downloadExample() {
+            const csvContent = `Врач,Фамилия,Кличка,Анализ,Примечания
+Волков И.Р.,Смирнов,Барсик,Кровь,
+Федосов М.А.,Иванова,Мурка,Моча,Срочный анализ
+Шашурина Ю.Н,Петров,Шарик,Кал,
+Олейник А.С.,Сидорова,Рекс,Гистология,Повтор через месяц
+Синюков С.С.,Кузнецов,Пушистик,Вет Юнион,Анализ из сторонней лаборатории`;
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'пример_анализов.csv';
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Показать уведомление
+        function showNotification(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${type === 'success' ? '<i class="bi bi-check-circle me-2"></i>' : 
+                  type === 'danger' ? '<i class="bi bi-exclamation-triangle me-2"></i>' : 
+                  '<i class="bi bi-info-circle me-2"></i>'}
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            const container = document.querySelector('.card-body');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            // Автоматическое скрытие через 5 секунд
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(alertDiv);
+                bsAlert.close();
+            }, 5000);
+        }
+        
+        // Автофокус на области загрузки
+        document.addEventListener('DOMContentLoaded', function() {
+            fileDropArea.focus();
         });
     </script>
 </body>
