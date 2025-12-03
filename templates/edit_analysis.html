@@ -407,7 +407,12 @@
                                         </div>
                                     </div>
                                 </div>
-                                
+
+                                <!-- Скрытые поля для сохранения фильтров -->
+                                <input type="hidden" name="redirect_doctor_id" value="{{ selected_doctor or '' }}">
+                                <input type="hidden" name="redirect_search" value="{{ search_query or '' }}">
+                                <input type="hidden" name="redirect_date" value="{{ date_filter or '' }}">
+                                                                 
                                 <!-- Кнопки действий -->
                                 <div class="d-flex justify-content-between pt-4 border-top">
                                     <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">

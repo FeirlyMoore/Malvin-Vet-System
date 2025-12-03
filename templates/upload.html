@@ -188,39 +188,39 @@
                         {% endif %}
                     {% endwith %}
                     
-                    <!-- Область загрузки файла -->
-                    <div class="file-drop-area mb-4" id="fileDropArea">
-                        <div class="file-drop-icon">
-                            <i class="bi bi-cloud-arrow-up"></i>
-                        </div>
-                        <h5 class="mb-2">Перетащите CSV файл сюда</h5>
-                        <p class="text-muted mb-3">или нажмите для выбора файла</p>
-                        <input type="file" id="csvFile" name="csv_file" accept=".csv" class="d-none" required>
-                        <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('csvFile').click()">
-                            <i class="bi bi-folder2-open me-2"></i>Выбрать файл
-                        </button>
-                        <div class="validation-error" id="fileError">
-                            Пожалуйста, выберите CSV файл
-                        </div>
-                    </div>
-                    
-                    <!-- Информация о выбранном файле -->
-                    <div class="file-info" id="fileInfo">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <i class="bi bi-file-earmark-text me-2"></i>
-                                <span id="fileName"></span>
-                                <small class="text-muted d-block" id="fileSize"></small>
-                            </div>
-                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeFile()">
-                                <i class="bi bi-x"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
                     <!-- Форма -->
                     <form method="POST" action="{{ url_for('upload_csv') }}" enctype="multipart/form-data" id="uploadForm">
                         <input type="hidden" id="selectedFile" name="csv_file">
+
+                        <!-- Область загрузки файла -->
+                        <div class="file-drop-area mb-4" id="fileDropArea">
+                            <div class="file-drop-icon">
+                                <i class="bi bi-cloud-arrow-up"></i>
+                            </div>
+                            <h5 class="mb-2">Перетащите CSV файл сюда</h5>
+                            <p class="text-muted mb-3">или нажмите для выбора файла</p>
+                            <input type="file" id="csvFile" name="csv_file" accept=".csv" class="d-none" required>
+                            <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('csvFile').click()">
+                                <i class="bi bi-folder2-open me-2"></i>Выбрать файл
+                            </button>
+                            <div class="validation-error" id="fileError">
+                                Пожалуйста, выберите CSV файл
+                            </div>
+                        </div>
+                        
+                        <!-- Информация о выбранном файле -->
+                        <div class="file-info" id="fileInfo">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi bi-file-earmark-text me-2"></i>
+                                    <span id="fileName"></span>
+                                    <small class="text-muted d-block" id="fileSize"></small>
+                                </div>
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeFile()">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                        </div>
                         
                         <!-- Опции загрузки -->
                         <div class="mb-4">

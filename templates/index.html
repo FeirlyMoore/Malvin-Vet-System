@@ -17,12 +17,8 @@
     <style>
         :root {
             --malvin-blue: #1a365d;
-            /*--malvin-blue: #ff770f;*/
             --malvin-light-blue: #2c5282;
-            /*--malvin-light-blue: #ff770f;*/
-            /*--malvin-accent: #38b2ac;*/
             --malvin-accent: #ff770f;
-            /*--malvin-success: #48bb78;*/
             --malvin-success: #ff770f;
             --malvin-warning: #ed8936;
         }
@@ -66,6 +62,14 @@
         
         .filter-card {
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(255, 119, 15, 0.05);
+        }
+        
+        .date-input {
+            font-family: monospace;
         }
     </style>
 </head>
@@ -155,7 +159,7 @@
                         
                         <form method="GET" action="{{ url_for('index') }}" class="row g-3">
                             <!-- Выбор врача -->
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label">Врач</label>
                                 <select name="doctor_id" class="form-select">
                                     <option value="">Все врачи</option>
@@ -167,29 +171,33 @@
                                 </select>
                             </div>
                             
-                            <!-- Статус -->
+                            <!-- Поиск по тексту -->
                             <div class="col-md-3">
-                                <label class="form-label">Статус</label>
-                                <select name="status" class="form-select">
-                                    <option value="actual" {% if selected_status == 'actual' %}selected{% endif %}>Актуальные</option>
-                                    <option value="processed" {% if selected_status == 'processed' %}selected{% endif %}>Обработанные</option>
-                                    <option value="" {% if not selected_status %}selected{% endif %}>Все</option>
-                                </select>
-                            </div>
-                            
-                            <!-- Поиск -->
-                            <div class="col-md-4">
                                 <label class="form-label">Поиск</label>
                                 <input type="text" name="search" class="form-control" 
-                                       placeholder="Фамилия, кличка или тип анализа..." 
+                                       placeholder="Фамилия, кличка, анализ..." 
                                        value="{{ search_query }}">
                             </div>
                             
+                            <!-- Фильтр по дате -->
+                            <div class="col-md-3">
+                                <label class="form-label">Дата создания</label>
+                                <input type="text" name="date" class="form-control date-input" 
+                                       placeholder="ДД.ММ.ГГГГ" 
+                                       value="{{ date_filter }}">
+                                <small class="text-muted">Например: 25.12.2024</small>
+                            </div>
+                            
                             <!-- Кнопки -->
-                            <div class="col-md-1 d-flex align-items-end">
-                                <button type="submit" class="btn btn-primary w-100">
-                                    <i class="bi bi-search"></i>
-                                </button>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <div class="d-flex gap-2 w-100">
+                                    <button type="submit" class="btn btn-primary flex-grow-1">
+                                        <i class="bi bi-search me-1"></i>Применить
+                                    </button>
+                                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary" title="Сбросить фильтры">
+                                        <i class="bi bi-x-circle"></i>
+                                    </a>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -232,7 +240,7 @@
                                 data-bs-target="#actual-content" type="button" role="tab">
                             <i class="bi bi-clock-history me-2"></i>
                             Актуальные анализы
-                            <span class="badge bg-warning ms-2">{{ actual_count }}</span>
+                            <span class="badge bg-warning ms-2">{{ actual_analyses|length }}</span>
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
@@ -240,7 +248,7 @@
                                 data-bs-target="#processed-content" type="button" role="tab">
                             <i class="bi bi-check-circle me-2"></i>
                             Проработанные
-                            <span class="badge bg-success ms-2">{{ processed_count }}</span>
+                            <span class="badge bg-success ms-2">{{ processed_analyses|length }}</span>
                         </button>
                     </li>
                 </ul>
@@ -249,7 +257,7 @@
                 <div class="tab-content" id="analysisTabContent">
                     <!-- Актуальные анализы -->
                     <div class="tab-pane fade show active" id="actual-content" role="tabpanel">
-                        {% if analyses %}
+                        {% if actual_analyses %}
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead>
@@ -264,7 +272,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for analysis in analyses if analysis.status == 'actual' %}
+                                    {% for analysis in actual_analyses %}
                                     <tr class="align-middle">
                                         <td>
                                             <span class="badge bg-warning analysis-badge">
@@ -302,6 +310,11 @@
                                             <div class="btn-group btn-group-sm" role="group">
                                                 <form method="POST" action="{{ url_for('mark_called', analysis_id=analysis.id) }}" 
                                                       class="d-inline" onsubmit="return confirm('Отметить как обработанный?')">
+                                                    <!-- Скрытые поля для сохранения фильтров -->
+                                                    <input type="hidden" name="redirect_doctor_id" value="{{ selected_doctor or '' }}">
+                                                    <input type="hidden" name="redirect_search" value="{{ search_query or '' }}">
+                                                    <input type="hidden" name="redirect_date" value="{{ date_filter or '' }}">
+                                                    
                                                     <button type="submit" class="btn btn-success" title="Отметить звонок">
                                                         <i class="bi bi-telephone"></i>
                                                     </button>
@@ -312,6 +325,11 @@
                                                 </a>
                                                 <form method="POST" action="{{ url_for('delete_analysis', analysis_id=analysis.id) }}" 
                                                       class="d-inline" onsubmit="return confirm('Удалить этот анализ?')">
+                                                    <!-- Скрытые поля для сохранения фильтров -->
+                                                    <input type="hidden" name="redirect_doctor_id" value="{{ selected_doctor or '' }}">
+                                                    <input type="hidden" name="redirect_search" value="{{ search_query or '' }}">
+                                                    <input type="hidden" name="redirect_date" value="{{ date_filter or '' }}">
+                                                    
                                                     <button type="submit" class="btn btn-danger" title="Удалить">
                                                         <i class="bi bi-trash"></i>
                                                     </button>
@@ -327,7 +345,13 @@
                         <div class="empty-state">
                             <i class="bi bi-clipboard-check display-4 mb-3"></i>
                             <h4>Нет актуальных анализов</h4>
-                            <p class="text-muted">Все анализы обработаны или добавьте новые</p>
+                            <p class="text-muted">
+                                {% if selected_doctor or search_query or date_filter %}
+                                Для выбранных фильтров нет актуальных анализов
+                                {% else %}
+                                Все анализы обработаны или добавьте новые
+                                {% endif %}
+                            </p>
                             <a href="{{ url_for('add_analysis') }}" class="btn btn-primary mt-2">
                                 <i class="bi bi-plus-circle me-2"></i>Добавить анализ
                             </a>
@@ -337,7 +361,7 @@
                     
                     <!-- Проработанные анализы -->
                     <div class="tab-pane fade" id="processed-content" role="tabpanel">
-                        {% if analyses %}
+                        {% if processed_analyses %}
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead>
@@ -352,7 +376,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for analysis in analyses if analysis.status == 'processed' %}
+                                    {% for analysis in processed_analyses %}
                                     <tr class="align-middle">
                                         <td>
                                             <span class="badge bg-success analysis-badge">
@@ -398,6 +422,11 @@
                                                 </a>
                                                 <form method="POST" action="{{ url_for('delete_analysis', analysis_id=analysis.id) }}" 
                                                       class="d-inline" onsubmit="return confirm('Удалить этот анализ?')">
+                                                    <!-- Скрытые поля для сохранения фильтров -->
+                                                    <input type="hidden" name="redirect_doctor_id" value="{{ selected_doctor or '' }}">
+                                                    <input type="hidden" name="redirect_search" value="{{ search_query or '' }}">
+                                                    <input type="hidden" name="redirect_date" value="{{ date_filter or '' }}">
+                                                    
                                                     <button type="submit" class="btn btn-danger" title="Удалить">
                                                         <i class="bi bi-trash"></i>
                                                     </button>
@@ -413,7 +442,13 @@
                         <div class="empty-state">
                             <i class="bi bi-clipboard-data display-4 mb-3"></i>
                             <h4>Нет проработанных анализов</h4>
-                            <p class="text-muted">Начните отмечать анализы как обработанные</p>
+                            <p class="text-muted">
+                                {% if selected_doctor or search_query or date_filter %}
+                                Для выбранных фильтров нет проработанных анализов
+                                {% else %}
+                                Начните отмечать анализы как обработанные
+                                {% endif %}
+                            </p>
                         </div>
                         {% endif %}
                     </div>
@@ -462,6 +497,35 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- Информация о фильтрах -->
+                        {% if selected_doctor or search_query or date_filter %}
+                        <div class="mt-4 pt-3 border-top">
+                            <h6 class="mb-2">
+                                <i class="bi bi-funnel me-1"></i>Примененные фильтры:
+                            </h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% if selected_doctor %}
+                                {% set doctor_name = doctors|selectattr('id', 'equalto', selected_doctor)|map(attribute='name')|first %}
+                                <span class="badge bg-info">
+                                    <i class="bi bi-person me-1"></i>{{ doctor_name }}
+                                </span>
+                                {% endif %}
+                                
+                                {% if search_query %}
+                                <span class="badge bg-info">
+                                    <i class="bi bi-search me-1"></i>"{{ search_query }}"
+                                </span>
+                                {% endif %}
+                                
+                                {% if date_filter %}
+                                <span class="badge bg-info">
+                                    <i class="bi bi-calendar me-1"></i>{{ date_filter }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
                 
@@ -527,14 +591,14 @@
                             </li>
                             <li class="mb-2">
                                 <small class="text-muted">
-                                    <i class="bi bi-file-text me-2"></i>
-                                    Логи сохраняются ежедневно
+                                    <i class="bi bi-clock-history me-2"></i>
+                                    Актуальные анализы: {{ actual_count }}
                                 </small>
                             </li>
                             <li>
                                 <small class="text-muted">
-                                    <i class="bi bi-shield-check me-2"></i>
-                                    Данные сохраняются автоматически
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    Обработанные анализы: {{ processed_count }}
                                 </small>
                             </li>
                         </ul>
@@ -586,6 +650,9 @@
                     <small class="text-light opacity-75">
                         Версия 1.0 | 
                         <i class="bi bi-cpu ms-2 me-1"></i>Всего анализов: {{ total_analyses }}
+                        {% if selected_doctor or search_query or date_filter %}
+                        <br><i class="bi bi-funnel ms-2 me-1"></i>Фильтры применены
+                        {% endif %}
                     </small>
                 </div>
             </div>
@@ -623,38 +690,34 @@
                 }, 5000);
             });
             
-            // Подтверждение удаления с кастомным текстом
-            const deleteForms = document.querySelectorAll('form[onsubmit*="confirm"]');
-            deleteForms.forEach(form => {
-                form.onsubmit = function() {
-                    return confirm('Вы уверены, что хотите удалить этот анализ? Это действие нельзя отменить.');
-                };
-            });
-        });
-        
-        // Обновление статистики через AJAX
-        function updateStats() {
-            fetch('/api/stats')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Обновляем счетчики
-                        document.querySelector('.display-6.text-primary').textContent = data.data.total;
-                        document.querySelector('.display-6.text-warning').textContent = data.data.actual;
-                        document.querySelector('.display-6.text-success').textContent = data.data.processed;
-                        
-                        // Обновляем прогресс бар
-                        const progressBar = document.querySelector('.progress-bar.bg-success');
-                        if (progressBar) {
-                            progressBar.style.width = data.data.actual_percentage + '%';
-                        }
+            // Маска для ввода даты
+            const dateInput = document.querySelector('input[name="date"]');
+            if (dateInput) {
+                dateInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length > 2) {
+                        value = value.slice(0, 2) + '.' + value.slice(2);
                     }
-                })
-                .catch(error => console.error('Ошибка обновления статистики:', error));
-        }
-        
-        // Обновлять статистику каждые 30 секунд
-        setInterval(updateStats, 30000);
+                    if (value.length > 5) {
+                        value = value.slice(0, 5) + '.' + value.slice(5, 9);
+                    }
+                    e.target.value = value;
+                });
+                
+                // Подсказка с сегодняшней датой при фокусе
+                dateInput.addEventListener('focus', function() {
+                    if (!this.value) {
+                        const today = new Date();
+                        const formattedDate = today.toLocaleDateString('ru-RU');
+                        this.placeholder = 'Например: ' + formattedDate;
+                    }
+                });
+                
+                dateInput.addEventListener('blur', function() {
+                    this.placeholder = 'ДД.ММ.ГГГГ';
+                });
+            }
+        });
     </script>
 </body>
 </html>
