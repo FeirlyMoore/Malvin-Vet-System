@@ -43,6 +43,7 @@
         
         .action-btn:hover {
             transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         
         .doctor-progress {
@@ -62,6 +63,7 @@
         
         .filter-card {
             background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid rgba(0,0,0,0.1);
         }
         
         .table tbody tr:hover {
@@ -71,20 +73,141 @@
         .date-input {
             font-family: monospace;
         }
+        
+        /* Стили для кнопок действий в таблице */
+        .action-buttons-group {
+            display: flex;
+            gap: 4px; /* Отступ между кнопками */
+        }
+        
+        .action-buttons-group .btn {
+            border-radius: 4px !important; /* Скругленные края для всех кнопок */
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        
+        .action-buttons-group .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+        
+        .action-buttons-group .btn-success:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+        
+        .action-buttons-group .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        
+        .action-buttons-group .btn-primary:hover {
+            background-color: #0069d9;
+            border-color: #0062cc;
+        }
+        
+        .action-buttons-group .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+        
+        .action-buttons-group .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+        
+        /* Стили для выравнивания фильтров */
+        .filter-row {
+            align-items: flex-end;
+        }
+        
+        .filter-label {
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+        
+        .filter-buttons {
+            height: 100%;
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+        }
+        
+        .filter-buttons .btn {
+            height: 38px; /* Такая же высота как у инпутов */
+        }
+        
+        /* Логотип в навбаре */
+        .navbar-brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .navbar-brand-logo img {
+            height: 42px;
+            width: auto;
+            object-fit: contain;
+        }
+        
+        .navbar-brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .navbar-brand-text .brand-name {
+            font-weight: 700;
+            font-size: 1.2rem;
+            line-height: 1.2;
+        }
+        
+        .navbar-brand-text .brand-subtitle {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            line-height: 1.2;
+        }
+        
+        /* Улучшенные вкладки */
+        .nav-tabs .nav-link {
+            border-radius: 8px 8px 0 0;
+            padding: 12px 20px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background-color: white;
+            border-bottom-color: white;
+            color: var(--malvin-blue);
+            font-weight: 600;
+        }
+        
+        .nav-tabs .nav-link:not(.active):hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Карточка быстрых действий */
+        .quick-actions-card .btn {
+            border-radius: 6px;
+            padding: 8px 16px;
+        }
     </style>
 </head>
 <body>
     <!-- Навигация -->
     <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, var(--malvin-blue) 0%, var(--malvin-light-blue) 100%);">
         <div class="container-fluid">
-            <!-- Логотип -->
-            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-heart-pulse fs-3 me-2"></i>
-                    <div>
-                        <span class="fw-bold">Malvin Vet</span>
-                        <small class="d-block opacity-75" style="font-size: 0.8rem;">Analytics System</small>
-                    </div>
+            <!-- Логотип с изображением -->
+            <a class="navbar-brand navbar-brand-logo" href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Malvin Vet Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="navbar-brand-text">
+                    <span class="brand-name text-light">Malvin Vet</span>
+                    <span class="brand-subtitle text-light">Analytics System</span>
                 </div>
             </a>
             
@@ -153,14 +276,14 @@
                 <!-- Фильтры -->
                 <div class="card filter-card mb-4">
                     <div class="card-body">
-                        <h5 class="card-title mb-3">
+                        <h5 class="card-title mb-4">
                             <i class="bi bi-funnel me-2"></i>Фильтры
                         </h5>
                         
-                        <form method="GET" action="{{ url_for('index') }}" class="row g-3">
+                        <form method="GET" action="{{ url_for('index') }}" class="row g-3 filter-row">
                             <!-- Выбор врача -->
                             <div class="col-md-3">
-                                <label class="form-label">Врач</label>
+                                <label class="form-label filter-label">Врач</label>
                                 <select name="doctor_id" class="form-select">
                                     <option value="">Все врачи</option>
                                     {% for doctor in doctors %}
@@ -173,7 +296,7 @@
                             
                             <!-- Поиск по тексту -->
                             <div class="col-md-3">
-                                <label class="form-label">Поиск</label>
+                                <label class="form-label filter-label">Поиск</label>
                                 <input type="text" name="search" class="form-control" 
                                        placeholder="Фамилия, кличка, анализ..." 
                                        value="{{ search_query }}">
@@ -181,21 +304,20 @@
                             
                             <!-- Фильтр по дате -->
                             <div class="col-md-3">
-                                <label class="form-label">Дата создания</label>
+                                <label class="form-label filter-label">Дата создания</label>
                                 <input type="text" name="date" class="form-control date-input" 
                                        placeholder="ДД.ММ.ГГГГ" 
                                        value="{{ date_filter }}">
-                                <small class="text-muted">Например: 25.12.2024</small>
                             </div>
                             
-                            <!-- Кнопки -->
-                            <div class="col-md-3 d-flex align-items-end">
-                                <div class="d-flex gap-2 w-100">
+                            <!-- Кнопки фильтрации -->
+                            <div class="col-md-3">
+                                <div class="filter-buttons">
                                     <button type="submit" class="btn btn-primary flex-grow-1">
                                         <i class="bi bi-search me-1"></i>Применить
                                     </button>
                                     <a href="{{ url_for('index') }}" class="btn btn-outline-secondary" title="Сбросить фильтры">
-                                        <i class="bi bi-x-circle"></i>
+                                        <i class="bi bi-x-lg"></i>
                                     </a>
                                 </div>
                             </div>
@@ -206,7 +328,7 @@
                 <!-- Быстрые действия -->
                 <div class="row mb-4">
                     <div class="col-12">
-                        <div class="card">
+                        <div class="card quick-actions-card">
                             <div class="card-body">
                                 <h5 class="card-title mb-3">
                                     <i class="bi bi-lightning me-2"></i>Быстрые действия
@@ -218,7 +340,7 @@
                                     <a href="{{ url_for('upload_csv') }}" class="btn btn-success action-btn">
                                         <i class="bi bi-upload me-2"></i>Загрузить CSV
                                     </a>
-                                    <a href="{{ url_for('view_logs') }}" class="btn btn-info action-btn">
+                                    <a href="{{ url_for('view_logs') }}" class="btn btn-info action-btn text-light">
                                         <i class="bi bi-journal-text me-2"></i>Просмотр логов
                                     </a>
                                     <a href="{{ url_for('export_data') }}" class="btn btn-warning action-btn">
@@ -284,7 +406,7 @@
                                         </td>
                                         <td>{{ analysis.client_surname }}</td>
                                         <td>
-                                            <span class="badge bg-light text-dark">
+                                            <span class="badge bg-light text-dark border">
                                                 {{ analysis.pet_name }}
                                             </span>
                                         </td>
@@ -307,7 +429,7 @@
                                             </small>
                                         </td>
                                         <td>
-                                            <div class="btn-group btn-group-sm" role="group">
+                                            <div class="action-buttons-group">
                                                 <form method="POST" action="{{ url_for('mark_called', analysis_id=analysis.id) }}" 
                                                       class="d-inline" onsubmit="return confirm('Отметить как обработанный?')">
                                                     <!-- Скрытые поля для сохранения фильтров -->
@@ -388,7 +510,7 @@
                                         </td>
                                         <td>{{ analysis.client_surname }}</td>
                                         <td>
-                                            <span class="badge bg-light text-dark">
+                                            <span class="badge bg-light text-dark border">
                                                 {{ analysis.pet_name }}
                                             </span>
                                         </td>
@@ -415,7 +537,7 @@
                                             </small>
                                         </td>
                                         <td>
-                                            <div class="btn-group btn-group-sm" role="group">
+                                            <div class="action-buttons-group">
                                                 <a href="{{ url_for('edit_analysis', analysis_id=analysis.id) }}" 
                                                    class="btn btn-primary" title="Редактировать">
                                                     <i class="bi bi-pencil"></i>
@@ -640,10 +762,12 @@
         <div class="container-fluid">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <div class="text-light">
-                        <i class="bi bi-heart-pulse me-2"></i>
-                        <strong>Malvin Vet Analytics System</strong>
-                        <small class="d-block opacity-75 mt-1">© 2024 Все права защищены</small>
+                    <div class="d-flex align-items-center">
+                        <img src="{{ url_for('static', filename='logo.png') }}" alt="Malvin Vet Logo" height="30" class="me-2" onerror="this.style.display='none'">
+                        <div class="text-light">
+                            <strong>Malvin Vet Analytics System</strong>
+                            <small class="d-block opacity-75 mt-1">© 2025 Все права защищены</small>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-6 text-md-end">
@@ -708,13 +832,28 @@
                 dateInput.addEventListener('focus', function() {
                     if (!this.value) {
                         const today = new Date();
-                        const formattedDate = today.toLocaleDateString('ru-RU');
+                        const day = String(today.getDate()).padStart(2, '0');
+                        const month = String(today.getMonth() + 1).padStart(2, '0');
+                        const year = today.getFullYear();
+                        const formattedDate = `${day}.${month}.${year}`;
                         this.placeholder = 'Например: ' + formattedDate;
                     }
                 });
                 
                 dateInput.addEventListener('blur', function() {
                     this.placeholder = 'ДД.ММ.ГГГГ';
+                });
+            }
+            
+            // Если логотип не загрузился, показываем иконку
+            const logoImg = document.querySelector('.navbar-brand img');
+            if (logoImg) {
+                logoImg.addEventListener('error', function() {
+                    const fallback = document.createElement('div');
+                    fallback.className = 'd-flex align-items-center';
+                    fallback.innerHTML = '<i class="bi bi-heart-pulse fs-3 text-light me-2"></i>';
+                    this.parentNode.insertBefore(fallback, this);
+                    this.style.display = 'none';
                 });
             }
         });
