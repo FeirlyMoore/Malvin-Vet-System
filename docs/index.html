@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Malvin Vet Analytics - Руководство пользователя</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0e6ba8;
+            --primary-dark: #0a4d7a;
+            --secondary: #f8f9fa;
+            --accent: #ff6b6b;
+            --text-dark: #333;
+            --text-light: #666;
+            --border: #e1e5eb;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --info: #17a2b8;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            color: var(--text-dark);
+            line-height: 1.6;
+            background-color: #f9f9f9;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary-dark);
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+            margin-top: 2rem;
+        }
+        
+        h3 {
+            font-size: 1.4rem;
+            margin-top: 1.5rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header */
+        header {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+        
+        .logo img {
+            height: 40px;
+        }
+        
+        .logo-text {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: var(--primary);
+        }
+        
+        .logo-text span {
+            color: var(--accent);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 500;
+            font-family: 'Montserrat', sans-serif;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+        
+        .nav-links a.active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 5px;
+        }
+        
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+            padding: 60px 0 40px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .hero h1 {
+            color: var(--primary-dark);
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-light);
+            max-width: 800px;
+            margin: 0 auto 30px;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background-color: var(--primary);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 600;
+            font-family: 'Montserrat', sans-serif;
+            transition: background-color 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .cta-button:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        /* Content Sections */
+        .content-section {
+            padding: 60px 0;
+        }
+        
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .section-title i {
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+        
+        .section-description {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            margin-bottom: 2rem;
+            max-width: 900px;
+        }
+        
+        /* Cards */
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 25px;
+            margin-bottom: 25px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .card.accent {
+            border-left-color: var(--accent);
+        }
+        
+        .card.info {
+            border-left-color: var(--info);
+        }
+        
+        .card.success {
+            border-left-color: var(--success);
+        }
+        
+        /* Lists */
+        ul, ol {
+            margin-left: 20px;
+            margin-bottom: 1.5rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 2rem;
+        }
+        
+        .feature-item {
+            background-color: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            border-top: 3px solid var(--primary);
+        }
+        
+        .feature-item h4 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .feature-item i {
+            color: var(--primary);
+        }
+        
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        /* Color Indicators */
+        .color-indicators {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 1.5rem 0;
+        }
+        
+        .color-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .color-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+        
+        .color-red { background-color: #ff0000; }
+        .color-yellow { background-color: #ffd700; }
+        .color-brown { background-color: #8b4513; }
+        .color-blue { background-color: #007bff; }
+        .color-green-light { background-color: #99ff99; }
+        .color-purple { background-color: #9370db; }
+        .color-cyan { background-color: #00ced1; }
+        .color-green-dark { background-color: #006400; }
+        
+        /* Steps */
+        .steps {
+            counter-reset: step-counter;
+            margin: 2rem 0;
+        }
+        
+        .step {
+            display: flex;
+            margin-bottom: 1.5rem;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .step-number {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        
+        /* Alert */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        
+        .alert i {
+            font-size: 1.3rem;
+            margin-top: 2px;
+        }
+        
+        .alert-info {
+            background-color: #e7f3fe;
+            border-left: 4px solid var(--info);
+            color: var(--primary-dark);
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            border-left: 4px solid var(--success);
+            color: #155724;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            border-left: 4px solid var(--warning);
+            color: #856404;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--primary-dark);
+            color: white;
+            padding: 40px 0 20px;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .footer-section h4 {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+        
+        .footer-section a {
+            color: #ddd;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 10px;
+            transition: color 0.3s;
+        }
+        
+        .footer-section a:hover {
+            color: white;
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .nav-links {
+                gap: 20px;
+            }
+            
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .color-indicators {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <a href="#" class="logo">
+                <div class="logo-text">MALVIN<span>VET</span></div>
+            </a>
+            <nav class="nav-links">
+                <a href="#" class="active">Руководство</a>
+                <a href="#">Функции</a>
+                <a href="#">Пользователи</a>
+                <a href="#">Статистика</a>
+                <a href="#">Поддержка</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>📋 Руководство по работе с системой Malvin Vet Analytics</h1>
+            <p class="hero-subtitle">Профессиональная веб-система для комплексного учёта и управления анализами в ветеринарной клинике. Объединяет всех сотрудников в едином рабочем пространстве, обеспечивая прозрачность процессов.</p>
+            <a href="#quick-start" class="cta-button">Начать работу</a>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Key Advantages -->
+        <section class="content-section">
+            <div class="section-title">
+                <i class="fas fa-star"></i>
+                <h2>⭐ Ключевые преимущества</h2>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-item">
+                    <h4><i class="fas fa-users"></i> Для всей команды</h4>
+                    <ul>
+                        <li>Единая информационная среда — все данные в одном месте</li>
+                        <li>Автоматизация рутины — минимизация бумажной работы</li>
+                        <li>Прозрачность — видимость статуса каждого анализа</li>
+                        <li>Централизованное хранение — быстрый доступ к истории</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-item">
+                    <h4><i class="fas fa-user-md"></i> Для врачей</h4>
+                    <ul>
+                        <li>Удобный список задач — все назначенные анализы под рукой</li>
+                        <li>Экономия времени — отметка выполненных звонков в один клик</li>
+                        <li>Личная статистика — визуализация прогресса по обработке</li>
+                        <li>Автоматическое логирование — все действия фиксируются</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-item">
+                    <h4><i class="fas fa-user-tie"></i> Для руководства</h4>
+                    <ul>
+                        <li>Реальная аналитика — актуальная статистика в реальном времени</li>
+                        <li>Контроль эффективности — мониторинг работы врачей</li>
+                        <li>Гибкая отчетность — фильтрация по датам, врачам, типам анализов</li>
+                        <li>Экспорт данных — готовые отчёты в формате CSV</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick Start -->
+        <section id="quick-start" class="content-section">
+            <div class="section-title">
+                <i class="fas fa-rocket"></i>
+                <h2>🚀 Быстрый старт</h2>
+            </div>
+            
+            <div class="card info">
+                <h3>Вход в систему</h3>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div>
+                            <p>Перейдите по адресу: <strong>http://localhost:5000</strong></p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div>
+                            <p>Введите учётные данные:</p>
+                            <p><strong>Логин:</strong> Malvin_42</p>
+                            <p><strong>Пароль:</strong> 585188</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div>
+                            <p>После входа вы попадёте на главную страницу с анализами</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Functions -->
+        <section class="content-section">
+            <div class="section-title">
+                <i class="fas fa-tasks"></i>
+                <h2>📝 Основные функции</h2>
+            </div>
+            
+            <div class="card">
+                <h3>1. Добавление нового анализа</h3>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div>
+                            <p>Нажмите кнопку <strong>"Добавить анализ"</strong></p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div>
+                            <p>Заполните обязательные поля (отмечены звёздочкой):</p>
+                            <ul>
+                                <li>Фамилия владельца</li>
+                                <li>Кличка питомца</li>
+                                <li>Тип анализа (выберите из списка)</li>
+                                <li>Врач (выберите из списка)</li>
+                                <li>Примечания (необязательно)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div>
+                            <p>Нажмите <strong>"Сохранить анализ"</strong></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>2. Массовая загрузка через CSV</h3>
+                <p>Порядок действий:</p>
+                <ol>
+                    <li>Подготовьте CSV-файл с колонками: <code>Врач, Фамилия, Кличка, Анализ, Примечания</code></li>
+                    <li>Нажмите <strong>"Загрузить CSV"</strong> на главной странице</li>
+                    <li>Выберите подготовленный файл</li>
+                </ol>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <div>
+                        <p><strong>Требования к файлу:</strong></p>
+                        <ul>
+                            <li>Кодировка: UTF-8</li>
+                            <li>Разделитель: запятая</li>
+                            <li>Макс. размер: 10 MB</li>
+                            <li>Обязательные колонки: Врач, Фамилия, Кличка, Анализ</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Color Marking -->
+        <section class="content-section">
+            <div class="section-title">
+                <i class="fas fa-palette"></i>
+                <h2>🎨 Цветовая маркировка типов анализов</h2>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Тип анализа</th>
+                        <th>Цвет (индикатор)</th>
+                        <th>Назначение</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Кровь</strong></td>
+                        <td><div class="color-item"><div class="color-circle color-red"></div>🔴 Красный</div></td>
+                        <td>Гематологические исследования</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Моча</strong></td>
+                        <td><div class="color-item"><div class="color-circle color-yellow"></div>🟡 Жёлтый</div></td>
+                        <td>Урологические анализы</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Кал</strong></td>
+                        <td><div class="color-item"><div class="color-circle color-brown"></div>🟤 Коричневый</div></td>
+                        <td>Копрологические исследования</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Вет Юнион</strong></td>
+                        <td><div class="color-item"><div class="color-circle color-blue"></div>🔵 Синий</div></td>
+                        <td>Внешние лаборатории</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Дерматология</strong></td>
+                        <td><div class="color-item"><div class="color-circle color-green-light"></div>🟢 Зелёный</div></td>
+                        <td>Кожные исследования</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ручное добавление</strong></td>
+                        <td><div class="color-item"><div class="color-circle color-purple"></div>🟣 Фиолетовый</div></td>
+                        <td>Анализы, добавленные вручную</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Troubleshooting -->
+        <section class="content-section">
+            <div class="section-title">
+                <i class="fas fa-life-ring"></i>
+                <h2>🆘 Решение распространённых проблем</h2>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Проблема</th>
+                        <th>Решение</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>"Не могу добавить анализ"</strong></td>
+                        <td>Проверьте заполнение обязательных полей и выбор врача из списка. Обновите страницу.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>"CSV-файл не загружается"</strong></td>
+                        <td>Проверьте кодировку (UTF-8), наличие обязательных колонок и размер файла (&lt;10 MB).</td>
+                    </tr>
+                    <tr>
+                        <td><strong>"Фильтры не работают"</strong></td>
+                        <td>Проверьте формат даты (ДД.ММ.ГГГГ), нажмите сброс или обновите страницу.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Support -->
+        <section class="content-section">
+            <div class="section-title">
+                <i class="fas fa-headset"></i>
+                <h2>📞 Поддержка</h2>
+            </div>
+            
+            <div class="card accent">
+                <h3>При проблемах:</h3>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div>
+                            <p>Проверьте подключение к интернету</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div>
+                            <p>Обновите страницу (F5) или очистите кэш браузера</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div>
+                            <p>Если проблема не решена, обратитесь в техническую поддержку</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-success">
+                    <i class="fas fa-address-card"></i>
+                    <div>
+                        <p><strong>Контакты:</strong> Разработчик — Feirly Moore (GitHub: @FeirlyMoore)</p>
+                        <p><strong>Система:</strong> Malvin Vet Analytics v1.0</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Malvin Vet Analytics</h4>
+                    <p>Профессиональная система для управления анализами в ветеринарной клинике. Экономит время, снижает количество ошибок и повышает эффективность работы всей клиники!</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Быстрые ссылки</h4>
+                    <a href="#">Руководство пользователя</a>
+                    <a href="#">Функции системы</a>
+                    <a href="#">Статистика и отчеты</a>
+                    <a href="#">Техподдержка</a>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Контакты</h4>
+                    <p>Разработчик: Feirly Moore</p>
+                    <p>GitHub: @FeirlyMoore</p>
+                    <p>Версия системы: 1.0</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>© 2023 Malvin Vet Analytics. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Simple script for smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+        
+        // Highlight current section in navigation
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('.nav-links a');
+            
+            let currentSectionId = '';
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 100;
+                const sectionHeight = section.clientHeight;
+                
+                if (window.scrollY >= sectionTop && window.scrollY < sectionTop + sectionHeight) {
+                    currentSectionId = '#' + section.id;
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === currentSectionId) {
+                    link.classList.add('active');
+                }
+            });
+            
+            // If at the top, make the first link active
+            if (window.scrollY < 100) {
+                navLinks.forEach(link => link.classList.remove('active'));
+                document.querySelector('.nav-links a[href="#"]').classList.add('active');
+            }
+        });
+    </script>
+</body>
+</html>

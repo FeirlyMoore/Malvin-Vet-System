@@ -763,6 +763,72 @@ def reset_all():
     
     return redirect(url_for('index'))
 
+# Сброс базы данных с подтверждением по паролю
+@app.route('/reset_database', methods=['POST'])
+@login_required
+def reset_database():
+    try:
+        # Получаем пароль из формы
+        password = request.form.get('password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
+        confirmation = request.form.get('confirmation', '').strip().lower()
+        
+        # Проверяем пароль
+        if password != 'FeirlyMoore_42':
+            flash('Неверный пароль', 'danger')
+            return redirect(url_for('index'))
+        
+        # Проверяем подтверждение пароля
+        if password != confirm_password:
+            flash('Пароли не совпадают', 'danger')
+            return redirect(url_for('index'))
+        
+        # Проверяем текстовое подтверждение
+        if confirmation != 'сбросить базу данных':
+            flash('Неверное подтверждение действия', 'danger')
+            return redirect(url_for('index'))
+        
+        # Получаем статистику перед удалением
+        total_analyses = Analysis.query.count()
+        total_doctors = Doctor.query.count()
+        
+        # Удаляем все анализы
+        Analysis.query.delete()
+        
+        # Удаляем всех врачей (кроме предустановленных, которые добавятся снова)
+        Doctor.query.delete()
+        
+        # Добавляем врачей по умолчанию
+        initial_doctors = [
+            'Волков И.Р.',
+            'Федосов М.А.', 
+            'Шашурина Ю.Н',
+            'Олейник А.С.',
+            'Синюков С.С.',
+            'Соколова А.С',
+            'Гришина А.С.',
+            'Соловьев Д.Е.',
+            'Титова Н.И',
+            'Лочехина Е.А.',
+            'Зюков И.И.',
+            'Синюкова Е.В.',
+            'Макаренко В.А.',
+            'Без врача'
+        ]
+        
+        for doc_name in initial_doctors:
+            doctor = Doctor(name=doc_name)
+            db.session.add(doctor)
+        
+        db.session.commit()
+        
+        flash(f'✅ База данных успешно сброшена! Удалено {total_analyses} анализов и {total_doctors} врачей. Добавлено 14 врачей по умолчанию.', 'success')
+        
+    except Exception as e:
+        flash(f'❌ Ошибка при сбросе базы данных: {str(e)}', 'danger')
+    
+    return redirect(url_for('index'))
+
 # Обработка 404 ошибок
 @app.errorhandler(404)
 def not_found_error(error):

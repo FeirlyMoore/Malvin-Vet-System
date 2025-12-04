@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Учет анализов - Malvin Vet Analytics</title>
     
+    <!-- Фавикон -->
+    <link rel="shortcut icon" href="https://static.tildacdn.com/tild3931-3964-4333-a139-616331303063/favicon.ico" type="image/x-icon"> 
+    <link rel="apple-touch-icon" href="https://static.tildacdn.com/tild6461-3331-4337-b635-306361643663/304.png"> 
+    <link rel="apple-touch-icon" sizes="76x76" href="https://static.tildacdn.com/tild6461-3331-4337-b635-306361643663/304.png"> 
+    <link rel="apple-touch-icon" sizes="152x152" href="https://static.tildacdn.com/tild6461-3331-4337-b635-306361643663/304.png"> 
+    <link rel="apple-touch-startup-image" href="https://static.tildacdn.com/tild6461-3331-4337-b635-306361643663/304.png"> 
+    <meta name="msapplication-TileColor" content="#000000"> 
+    <meta name="msapplication-TileImage" content="https://static.tildacdn.com/tild3061-3563-4638-a463-663764313862/540.png">
+    
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
@@ -21,6 +30,13 @@
             --malvin-accent: #ff770f;
             --malvin-success: #ff770f;
             --malvin-warning: #ed8936;
+            --malvin-danger: #dc3545;
+            --blood-color: #dc3545; /* Красный для крови */
+            --urine-color: #ffc107; /* Жёлтый для мочи */
+            --feces-color: #8B4513; /* Коричневый для кала */
+            --vet-union-color: #0d6efd; /* Синий для Вет Юнион */
+            --dermatology-color: #99ff99; /* HEX#99ff99 для дерматологии */
+            --manual-color: #8b00ff; /* HEX#8b00ff для добавленных вручную */
         }
         
         .navbar-logo {
@@ -35,6 +51,49 @@
         .analysis-badge {
             font-size: 0.75rem;
             padding: 0.25rem 0.5rem;
+        }
+        
+        /* Стили для цветов анализов */
+        .badge-blood {
+            background-color: var(--blood-color) !important;
+            border-color: var(--blood-color) !important;
+        }
+        
+        .badge-urine {
+            background-color: var(--urine-color) !important;
+            border-color: var(--urine-color) !important;
+            color: #212529 !important;
+        }
+        
+        .badge-feces {
+            background-color: var(--feces-color) !important;
+            border-color: var(--feces-color) !important;
+        }
+        
+        .badge-vet-union {
+            background-color: var(--vet-union-color) !important;
+            border-color: var(--vet-union-color) !important;
+        }
+        
+        .badge-dermatology {
+            background-color: var(--dermatology-color) !important;
+            border-color: var(--dermatology-color) !important;
+            color: #212529 !important;
+        }
+        
+        .badge-manual {
+            background-color: var(--manual-color) !important;
+            border-color: var(--manual-color) !important;
+        }
+        
+        .badge-cytology {
+            background-color: #17a2b8 !important;
+            border-color: #17a2b8 !important;
+        }
+        
+        .badge-histology {
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
         }
         
         .action-btn {
@@ -122,7 +181,8 @@
         
         /* Стили для выравнивания фильтров */
         .filter-row {
-            align-items: flex-end;
+            align-items: center;
+            margin-bottom: 0;
         }
         
         .filter-label {
@@ -134,12 +194,29 @@
         .filter-buttons {
             height: 100%;
             display: flex;
-            align-items: flex-end;
+            align-items: center;
             gap: 8px;
+            margin-top: 1.5rem;
         }
         
         .filter-buttons .btn {
             height: 38px; /* Такая же высота как у инпутов */
+        }
+        
+        .reset-btn {
+            color: #dc3545 !important;
+            border-color: #dc3545 !important;
+            background-color: transparent !important;
+        }
+        
+        .reset-btn:hover {
+            background-color: #dc3545 !important;
+            color: white !important;
+        }
+        
+        /* Компактные стили для фильтров */
+        .compact-filters .col-md-3 {
+            padding-bottom: 0.5rem;
         }
         
         /* Логотип в навбаре */
@@ -172,29 +249,219 @@
             line-height: 1.2;
         }
         
-        /* Улучшенные вкладки */
+        /* Улучшенные вкладки с оранжевой линией */
+        .nav-tabs {
+            border-bottom: 2px solid #dee2e6;
+        }
+        
         .nav-tabs .nav-link {
             border-radius: 8px 8px 0 0;
             padding: 12px 20px;
             font-weight: 500;
             transition: all 0.2s ease;
+            border: 1px solid transparent;
+            border-bottom: none;
+            position: relative;
+            margin-bottom: -1px;
         }
         
         .nav-tabs .nav-link.active {
             background-color: white;
-            border-bottom-color: white;
+            border-color: #dee2e6 #dee2e6 white;
             color: var(--malvin-blue);
             font-weight: 600;
         }
         
+        .nav-tabs .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background-color: var(--malvin-accent);
+            border-radius: 3px 3px 0 0;
+        }
+        
         .nav-tabs .nav-link:not(.active):hover {
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 119, 15, 0.05);
+            border-color: rgba(255, 119, 15, 0.2);
         }
         
         /* Карточка быстрых действий */
         .quick-actions-card .btn {
             border-radius: 6px;
             padding: 8px 16px;
+        }
+        
+        /* Общие стили для модальных окон подтверждения */
+        .confirm-modal-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .confirm-modal-content {
+            border-radius: 12px;
+            overflow: hidden;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .confirm-modal-header {
+            border-bottom: none;
+            padding: 1.5rem;
+        }
+        
+        .confirm-modal-body {
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .confirm-modal-footer {
+            border-top: 1px solid #dee2e6;
+            padding: 1.5rem;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .analysis-details {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            text-align: left;
+        }
+        
+        .detail-row {
+            display: flex;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .detail-row:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: #495057;
+            min-width: 120px;
+        }
+        
+        .detail-value {
+            color: #212529;
+            flex-grow: 1;
+        }
+        
+        /* Специфичные стили для модального окна звонка */
+        .call-modal-header {
+            background: linear-gradient(135deg, var(--malvin-blue) 0%, var(--malvin-light-blue) 100%);
+            color: white;
+        }
+        
+        .call-modal-icon {
+            color: var(--malvin-accent);
+        }
+        
+        /* Специфичные стили для модального окна удаления */
+        .delete-modal-header {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+        
+        .delete-modal-icon {
+            color: #dc3545;
+        }
+        
+        .warning-text {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        .warning-note {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: left;
+        }
+        
+        .warning-note i {
+            color: #856404;
+        }
+        
+        /* Липкая панель статистики */
+        .sticky-sidebar {
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+        
+        .sticky-sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .sticky-sidebar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        
+        .sticky-sidebar::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        
+        .sticky-sidebar::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        /* Футер с разработчиком */
+        .footer-developer {
+            color: white !important;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            opacity: 0.9;
+        }
+        
+        .footer-developer:hover {
+            color: white !important;
+            opacity: 1;
+            text-decoration: none;
+        }
+        
+        /* Медиа-запросы для адаптивности */
+        @media (max-width: 991.98px) {
+            .sticky-sidebar {
+                position: static;
+                max-height: none;
+                overflow-y: visible;
+            }
+            
+            .filter-buttons {
+                margin-top: 0;
+            }
+        }
+        
+        @media (max-width: 767.98px) {
+            .compact-filters .col-md-3 {
+                padding-bottom: 1rem;
+            }
+            
+            .filter-buttons {
+                justify-content: center;
+            }
+            
+            .nav-tabs .nav-link {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
@@ -243,7 +510,8 @@
                 
                 <!-- Правая часть навигации -->
                 <div class="d-flex align-items-center">
-                    <span class="text-light me-3 d-none d-md-block">
+                    <span class="text-light me-3 d-none d-md-block" style="cursor: pointer;" 
+                          data-bs-toggle="modal" data-bs-target="#userMenuModal">
                         <i class="bi bi-person-circle me-1"></i>
                         {{ session.username if session.username else 'Администратор' }}
                     </span>
@@ -276,11 +544,11 @@
                 <!-- Фильтры -->
                 <div class="card filter-card mb-4">
                     <div class="card-body">
-                        <h5 class="card-title mb-4">
+                        <h5 class="card-title mb-3">
                             <i class="bi bi-funnel me-2"></i>Фильтры
                         </h5>
                         
-                        <form method="GET" action="{{ url_for('index') }}" class="row g-3 filter-row">
+                        <form method="GET" action="{{ url_for('index') }}" class="row g-3 filter-row compact-filters">
                             <!-- Выбор врача -->
                             <div class="col-md-3">
                                 <label class="form-label filter-label">Врач</label>
@@ -316,7 +584,7 @@
                                     <button type="submit" class="btn btn-primary flex-grow-1">
                                         <i class="bi bi-search me-1"></i>Применить
                                     </button>
-                                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary" title="Сбросить фильтры">
+                                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary reset-btn" title="Сбросить фильтры">
                                         <i class="bi bi-x-lg"></i>
                                     </a>
                                 </div>
@@ -412,16 +680,23 @@
                                         </td>
                                         <td>
                                             {% set analysis_colors = {
-                                                'Кровь': 'danger',
-                                                'Моча': 'primary', 
-                                                'Кал': 'warning',
-                                                'Цитология': 'info',
-                                                'Гистология': 'success',
-                                                'Вет Юнион': 'secondary'
+                                                'Кровь': 'blood',
+                                                'Моча': 'urine', 
+                                                'Кал': 'feces',
+                                                'Цитология': 'cytology',
+                                                'Гистология': 'histology',
+                                                'Вет Юнион': 'vet-union',
+                                                'Дерматология': 'dermatology'
                                             } %}
-                                            <span class="badge bg-{{ analysis_colors.get(analysis.analysis_type, 'dark') }}">
+                                            {% if analysis.analysis_type in analysis_colors %}
+                                            <span class="badge badge-{{ analysis_colors[analysis.analysis_type] }} analysis-badge">
                                                 {{ analysis.analysis_type }}
                                             </span>
+                                            {% else %}
+                                            <span class="badge badge-manual analysis-badge">
+                                                {{ analysis.analysis_type }}
+                                            </span>
+                                            {% endif %}
                                         </td>
                                         <td>
                                             <small class="text-muted">
@@ -430,32 +705,37 @@
                                         </td>
                                         <td>
                                             <div class="action-buttons-group">
-                                                <form method="POST" action="{{ url_for('mark_called', analysis_id=analysis.id) }}" 
-                                                      class="d-inline" onsubmit="return confirm('Отметить как обработанный?')">
-                                                    <!-- Скрытые поля для сохранения фильтров -->
-                                                    <input type="hidden" name="redirect_doctor_id" value="{{ selected_doctor or '' }}">
-                                                    <input type="hidden" name="redirect_search" value="{{ search_query or '' }}">
-                                                    <input type="hidden" name="redirect_date" value="{{ date_filter or '' }}">
-                                                    
-                                                    <button type="submit" class="btn btn-success" title="Отметить звонок">
-                                                        <i class="bi bi-telephone"></i>
-                                                    </button>
-                                                </form>
+                                                <!-- Кнопка для открытия модального окна подтверждения звонка -->
+                                                <button type="button" class="btn btn-success" 
+                                                        title="Отметить звонок"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#confirmCallModal"
+                                                        data-analysis-id="{{ analysis.id }}"
+                                                        data-client-surname="{{ analysis.client_surname }}"
+                                                        data-pet-name="{{ analysis.pet_name }}"
+                                                        data-analysis-type="{{ analysis.analysis_type }}"
+                                                        data-doctor-name="{{ analysis.doctor.name if analysis.doctor else 'Не указан' }}"
+                                                        data-created-at="{{ analysis.created_at.strftime('%d.%m.%Y %H:%M') }}">
+                                                    <i class="bi bi-telephone"></i>
+                                                </button>
                                                 <a href="{{ url_for('edit_analysis', analysis_id=analysis.id) }}" 
                                                    class="btn btn-primary" title="Редактировать">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
-                                                <form method="POST" action="{{ url_for('delete_analysis', analysis_id=analysis.id) }}" 
-                                                      class="d-inline" onsubmit="return confirm('Удалить этот анализ?')">
-                                                    <!-- Скрытые поля для сохранения фильтров -->
-                                                    <input type="hidden" name="redirect_doctor_id" value="{{ selected_doctor or '' }}">
-                                                    <input type="hidden" name="redirect_search" value="{{ search_query or '' }}">
-                                                    <input type="hidden" name="redirect_date" value="{{ date_filter or '' }}">
-                                                    
-                                                    <button type="submit" class="btn btn-danger" title="Удалить">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </form>
+                                                <!-- Кнопка для открытия модального окна подтверждения удаления -->
+                                                <button type="button" class="btn btn-danger" 
+                                                        title="Удалить"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#confirmDeleteModal"
+                                                        data-analysis-id="{{ analysis.id }}"
+                                                        data-client-surname="{{ analysis.client_surname }}"
+                                                        data-pet-name="{{ analysis.pet_name }}"
+                                                        data-analysis-type="{{ analysis.analysis_type }}"
+                                                        data-doctor-name="{{ analysis.doctor.name if analysis.doctor else 'Не указан' }}"
+                                                        data-created-at="{{ analysis.created_at.strftime('%d.%m.%Y %H:%M') }}"
+                                                        data-analysis-status="{{ analysis.status }}">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -516,16 +796,23 @@
                                         </td>
                                         <td>
                                             {% set analysis_colors = {
-                                                'Кровь': 'danger',
-                                                'Моча': 'primary', 
-                                                'Кал': 'warning',
-                                                'Цитология': 'info',
-                                                'Гистология': 'success',
-                                                'Вет Юнион': 'secondary'
+                                                'Кровь': 'blood',
+                                                'Моча': 'urine', 
+                                                'Кал': 'feces',
+                                                'Цитология': 'cytology',
+                                                'Гистология': 'histology',
+                                                'Вет Юнион': 'vet-union',
+                                                'Дерматология': 'dermatology'
                                             } %}
-                                            <span class="badge bg-{{ analysis_colors.get(analysis.analysis_type, 'dark') }}">
+                                            {% if analysis.analysis_type in analysis_colors %}
+                                            <span class="badge badge-{{ analysis_colors[analysis.analysis_type] }} analysis-badge">
                                                 {{ analysis.analysis_type }}
                                             </span>
+                                            {% else %}
+                                            <span class="badge badge-manual analysis-badge">
+                                                {{ analysis.analysis_type }}
+                                            </span>
+                                            {% endif %}
                                         </td>
                                         <td>
                                             <small class="text-muted">
@@ -542,17 +829,20 @@
                                                    class="btn btn-primary" title="Редактировать">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
-                                                <form method="POST" action="{{ url_for('delete_analysis', analysis_id=analysis.id) }}" 
-                                                      class="d-inline" onsubmit="return confirm('Удалить этот анализ?')">
-                                                    <!-- Скрытые поля для сохранения фильтров -->
-                                                    <input type="hidden" name="redirect_doctor_id" value="{{ selected_doctor or '' }}">
-                                                    <input type="hidden" name="redirect_search" value="{{ search_query or '' }}">
-                                                    <input type="hidden" name="redirect_date" value="{{ date_filter or '' }}">
-                                                    
-                                                    <button type="submit" class="btn btn-danger" title="Удалить">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </form>
+                                                <!-- Кнопка для открытия модального окна подтверждения удаления -->
+                                                <button type="button" class="btn btn-danger" 
+                                                        title="Удалить"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#confirmDeleteModal"
+                                                        data-analysis-id="{{ analysis.id }}"
+                                                        data-client-surname="{{ analysis.client_surname }}"
+                                                        data-pet-name="{{ analysis.pet_name }}"
+                                                        data-analysis-type="{{ analysis.analysis_type }}"
+                                                        data-doctor-name="{{ analysis.doctor.name if analysis.doctor else 'Не указан' }}"
+                                                        data-created-at="{{ analysis.created_at.strftime('%d.%m.%Y %H:%M') }}"
+                                                        data-analysis-status="{{ analysis.status }}">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -579,152 +869,289 @@
             
             <!-- Панель статистики (правая колонка) -->
             <div class="col-lg-4">
-                <!-- Общая статистика -->
-                <div class="card stats-card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title mb-4">
-                            <i class="bi bi-bar-chart me-2"></i>Общая статистика
-                        </h5>
-                        
-                        <div class="row text-center mb-4">
-                            <div class="col-4">
-                                <div class="display-6 fw-bold text-primary">{{ total_analyses }}</div>
-                                <small class="text-muted">Всего</small>
-                            </div>
-                            <div class="col-4">
-                                <div class="display-6 fw-bold text-warning">{{ actual_count }}</div>
-                                <small class="text-muted">Актуальные</small>
-                            </div>
-                            <div class="col-4">
-                                <div class="display-6 fw-bold text-success">{{ processed_count }}</div>
-                                <small class="text-muted">Обработано</small>
-                            </div>
-                        </div>
-                        
-                        <!-- Прогресс бар -->
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between mb-1">
-                                <small>Прогресс обработки</small>
-                                <small>
-                                    {% if total_analyses > 0 %}
-                                    {{ ((processed_count / total_analyses) * 100)|round|int }}%
-                                    {% else %}
-                                    0%
-                                    {% endif %}
-                                </small>
-                            </div>
-                            <div class="progress" style="height: 10px;">
-                                <div class="progress-bar bg-success" 
-                                     style="width: {% if total_analyses > 0 %}{{ (processed_count / total_analyses * 100) }}{% else %}0{% endif %}%">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Информация о фильтрах -->
-                        {% if selected_doctor or search_query or date_filter %}
-                        <div class="mt-4 pt-3 border-top">
-                            <h6 class="mb-2">
-                                <i class="bi bi-funnel me-1"></i>Примененные фильтры:
-                            </h6>
-                            <div class="d-flex flex-wrap gap-2">
-                                {% if selected_doctor %}
-                                {% set doctor_name = doctors|selectattr('id', 'equalto', selected_doctor)|map(attribute='name')|first %}
-                                <span class="badge bg-info">
-                                    <i class="bi bi-person me-1"></i>{{ doctor_name }}
-                                </span>
-                                {% endif %}
-                                
-                                {% if search_query %}
-                                <span class="badge bg-info">
-                                    <i class="bi bi-search me-1"></i>"{{ search_query }}"
-                                </span>
-                                {% endif %}
-                                
-                                {% if date_filter %}
-                                <span class="badge bg-info">
-                                    <i class="bi bi-calendar me-1"></i>{{ date_filter }}
-                                </span>
-                                {% endif %}
-                            </div>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <!-- Статистика по врачам -->
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title mb-4">
-                            <i class="bi bi-people me-2"></i>Статистика по врачам
-                        </h5>
-                        
-                        <div class="list-group list-group-flush">
-                            {% for stat in doctor_stats if stat.total > 0 %}
-                            <div class="list-group-item border-0 px-0 py-3">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <div>
-                                        <strong class="d-block">{{ stat.name }}</strong>
-                                        <small class="text-muted">
-                                            {{ stat.processed }}/{{ stat.total }} обработано
-                                        </small>
-                                    </div>
-                                    <div class="text-end">
-                                        <span class="badge {% if stat.progress == 100 %}bg-success{% else %}bg-warning{% endif %}">
-                                            {{ stat.progress }}%
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="progress doctor-progress">
-                                    <div class="progress-bar {% if stat.progress == 100 %}bg-success{% else %}bg-warning{% endif %}" 
-                                         style="width: {{ stat.progress }}%">
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
+                <div class="sticky-sidebar">
+                    <!-- Общая статистика -->
+                    <div class="card stats-card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-4">
+                                <i class="bi bi-bar-chart me-2"></i>Общая статистика
+                            </h5>
                             
-                            {% if doctor_stats|selectattr('total', 'gt', 0)|list|length == 0 %}
-                            <div class="text-center py-4 text-muted">
-                                <i class="bi bi-people display-6 mb-3"></i>
-                                <p>Нет данных по врачам</p>
+                            <div class="row text-center mb-4">
+                                <div class="col-4">
+                                    <div class="display-6 fw-bold text-primary">{{ total_analyses }}</div>
+                                    <small class="text-muted">Всего</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="display-6 fw-bold text-warning">{{ actual_count }}</div>
+                                    <small class="text-muted">Актуальные</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="display-6 fw-bold text-success">{{ processed_count }}</div>
+                                    <small class="text-muted">Обработано</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Прогресс бар -->
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small>Прогресс обработки</small>
+                                    <small>
+                                        {% if total_analyses > 0 %}
+                                        {{ ((processed_count / total_analyses) * 100)|round|int }}%
+                                        {% else %}
+                                        0%
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar bg-success" 
+                                         style="width: {% if total_analyses > 0 %}{{ (processed_count / total_analyses * 100) }}{% else %}0{% endif %}%">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Информация о фильтрах -->
+                            {% if selected_doctor or search_query or date_filter %}
+                            <div class="mt-4 pt-3 border-top">
+                                <h6 class="mb-2">
+                                    <i class="bi bi-funnel me-1"></i>Примененные фильтры:
+                                </h6>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% if selected_doctor %}
+                                    {% set doctor_name = doctors|selectattr('id', 'equalto', selected_doctor)|map(attribute='name')|first %}
+                                    <span class="badge bg-info">
+                                        <i class="bi bi-person me-1"></i>{{ doctor_name }}
+                                    </span>
+                                    {% endif %}
+                                    
+                                    {% if search_query %}
+                                    <span class="badge bg-info">
+                                        <i class="bi bi-search me-1"></i>"{{ search_query }}"
+                                    </span>
+                                    {% endif %}
+                                    
+                                    {% if date_filter %}
+                                    <span class="badge bg-info">
+                                        <i class="bi bi-calendar me-1"></i>{{ date_filter }}
+                                    </span>
+                                    {% endif %}
+                                </div>
                             </div>
                             {% endif %}
                         </div>
                     </div>
-                </div>
-                
-                <!-- Информация о системе -->
-                <div class="card">
-                    <div class="card-body">
-                        <h6 class="card-title mb-3">
-                            <i class="bi bi-info-circle me-2"></i>Информация
-                        </h6>
-                        <ul class="list-unstyled mb-0">
-                            <li class="mb-2">
-                                <small class="text-muted">
-                                    <i class="bi bi-calendar me-2"></i>
-                                    Сегодня: {{ now.strftime('%d.%m.%Y') if now else '' }}
-                                </small>
-                            </li>
-                            <li class="mb-2">
-                                <small class="text-muted">
-                                    <i class="bi bi-database me-2"></i>
-                                    Всего врачей: {{ doctors|length }}
-                                </small>
-                            </li>
-                            <li class="mb-2">
-                                <small class="text-muted">
-                                    <i class="bi bi-clock-history me-2"></i>
-                                    Актуальные анализы: {{ actual_count }}
-                                </small>
-                            </li>
-                            <li>
-                                <small class="text-muted">
-                                    <i class="bi bi-check-circle me-2"></i>
-                                    Обработанные анализы: {{ processed_count }}
-                                </small>
-                            </li>
-                        </ul>
+                    
+                    <!-- Статистика по врачам -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title mb-4">
+                                <i class="bi bi-people me-2"></i>Статистика по врачам
+                            </h5>
+                            
+                            <div class="list-group list-group-flush">
+                                {% for stat in doctor_stats if stat.total > 0 %}
+                                <div class="list-group-item border-0 px-0 py-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div>
+                                            <strong class="d-block">{{ stat.name }}</strong>
+                                            <small class="text-muted">
+                                                {{ stat.processed }}/{{ stat.total }} обработано
+                                            </small>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge {% if stat.progress == 100 %}bg-success{% else %}bg-warning{% endif %}">
+                                                {{ stat.progress }}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="progress doctor-progress">
+                                        <div class="progress-bar {% if stat.progress == 100 %}bg-success{% else %}bg-warning{% endif %}" 
+                                             style="width: {{ stat.progress }}%">
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                
+                                {% if doctor_stats|selectattr('total', 'gt', 0)|list|length == 0 %}
+                                <div class="text-center py-4 text-muted">
+                                    <i class="bi bi-people display-6 mb-3"></i>
+                                    <p>Нет данных по врачам</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
+                    
+                    <!-- Информация о системе -->
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title mb-3">
+                                <i class="bi bi-info-circle me-2"></i>Информация
+                            </h6>
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar me-2"></i>
+                                        Сегодня: {{ now.strftime('%d.%m.%Y') if now else '' }}
+                                    </small>
+                                </li>
+                                <li class="mb-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-database me-2"></i>
+                                        Всего врачей: {{ doctors|length }}
+                                    </small>
+                                </li>
+                                <li class="mb-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock-history me-2"></i>
+                                        Актуальные анализы: {{ actual_count }}
+                                    </small>
+                                </li>
+                                <li>
+                                    <small class="text-muted">
+                                        <i class="bi bi-check-circle me-2"></i>
+                                        Обработанные анализы: {{ processed_count }}
+                                    </small>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для подтверждения отметки звонка -->
+    <div class="modal fade" id="confirmCallModal" tabindex="-1" aria-labelledby="confirmCallModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content confirm-modal-content">
+                <div class="modal-header confirm-modal-header call-modal-header">
+                    <h5 class="modal-title" id="confirmCallModalLabel">
+                        <i class="bi bi-telephone me-2"></i>Подтверждение звонка
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="confirm-modal-icon call-modal-icon">
+                        <i class="bi bi-telephone-outbound"></i>
+                    </div>
+                    <h4 class="mb-3">Отметить анализ как обработанный?</h4>
+                    <p class="text-muted mb-4">
+                        После подтверждения анализ будет перемещен в раздел "Проработанные" и появится в логах
+                    </p>
+                    
+                    <div class="analysis-details">
+                        <h6 class="mb-3">Информация об анализе:</h6>
+                        <div class="detail-row">
+                            <span class="detail-label">Владелец:</span>
+                            <span class="detail-value" id="modalCallClientSurname"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Кличка:</span>
+                            <span class="detail-value" id="modalCallPetName"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Тип анализа:</span>
+                            <span class="detail-value" id="modalCallAnalysisType"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Врач:</span>
+                            <span class="detail-value" id="modalCallDoctorName"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Дата создания:</span>
+                            <span class="detail-value" id="modalCallCreatedAt"></span>
+                        </div>
+                    </div>
+                    
+                    <form id="confirmCallForm" method="POST" action="">
+                        <!-- Скрытые поля для сохранения фильтров -->
+                        <input type="hidden" name="redirect_doctor_id" value="{{ selected_doctor or '' }}">
+                        <input type="hidden" name="redirect_search" value="{{ search_query or '' }}">
+                        <input type="hidden" name="redirect_date" value="{{ date_filter or '' }}">
+                        <input type="hidden" name="analysis_id" id="modalCallAnalysisId">
+                    </form>
+                </div>
+                <div class="modal-footer confirm-modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Отмена
+                    </button>
+                    <button type="button" class="btn btn-success" id="confirmCallButton">
+                        <i class="bi bi-check-circle me-1"></i>Да, отметить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для подтверждения удаления анализа -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content confirm-modal-content">
+                <div class="modal-header confirm-modal-header delete-modal-header">
+                    <h5 class="modal-title" id="confirmDeleteModalLabel">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Подтверждение удаления
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="confirm-modal-icon delete-modal-icon">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <h4 class="mb-3 warning-text">Вы уверены, что хотите удалить анализ?</h4>
+                    <p class="text-muted mb-4">
+                        Это действие нельзя отменить. Все данные об анализе будут безвозвратно удалены.
+                    </p>
+                    
+                    <div class="warning-note">
+                        <i class="bi bi-exclamation-circle me-2"></i>
+                        <strong>Внимание!</strong> Удаление приведет к безвозвратной потере данных.
+                    </div>
+                    
+                    <div class="analysis-details">
+                        <h6 class="mb-3">Информация об анализе:</h6>
+                        <div class="detail-row">
+                            <span class="detail-label">Владелец:</span>
+                            <span class="detail-value" id="modalDeleteClientSurname"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Кличка:</span>
+                            <span class="detail-value" id="modalDeletePetName"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Тип анализа:</span>
+                            <span class="detail-value" id="modalDeleteAnalysisType"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Врач:</span>
+                            <span class="detail-value" id="modalDeleteDoctorName"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Дата создания:</span>
+                            <span class="detail-value" id="modalDeleteCreatedAt"></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Статус:</span>
+                            <span class="detail-value" id="modalDeleteAnalysisStatus"></span>
+                        </div>
+                    </div>
+                    
+                    <form id="confirmDeleteForm" method="POST" action="">
+                        <!-- Скрытые поля для сохранения фильтров -->
+                        <input type="hidden" name="redirect_doctor_id" value="{{ selected_doctor or '' }}">
+                        <input type="hidden" name="redirect_search" value="{{ search_query or '' }}">
+                        <input type="hidden" name="redirect_date" value="{{ date_filter or '' }}">
+                        <input type="hidden" name="analysis_id" id="modalDeleteAnalysisId">
+                    </form>
+                </div>
+                <div class="modal-footer confirm-modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle me-1"></i>Отмена
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteButton">
+                        <i class="bi bi-trash me-1"></i>Да, удалить
+                    </button>
                 </div>
             </div>
         </div>
@@ -757,22 +1184,264 @@
         </div>
     </div>
 
+    <!-- Модальное окно пользователя со сбросом базы данных -->
+    <div class="modal fade" id="userMenuModal" tabindex="-1" aria-labelledby="userMenuModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, var(--malvin-blue) 0%, var(--malvin-light-blue) 100%);">
+                    <h5 class="modal-title text-white" id="userMenuModalLabel">
+                        <i class="bi bi-person-circle me-2"></i>Управление аккаунтом
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Информация о пользователе -->
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-body">
+                                    <h6 class="card-title mb-3">
+                                        <i class="bi bi-person-badge me-2"></i>Информация об аккаунте
+                                    </h6>
+                                    <div class="mb-3">
+                                        <small class="text-muted d-block">Имя пользователя</small>
+                                        <strong>{{ session.username if session.username else 'Администратор' }}</strong>
+                                    </div>
+                                    <div class="mb-3">
+                                        <small class="text-muted d-block">Роль</small>
+                                        <span class="badge bg-primary">Администратор</span>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block">Статус</small>
+                                        <span class="badge bg-success">Активен</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <h6 class="card-title mb-3">
+                                        <i class="bi bi-speedometer2 me-2"></i>Быстрые действия
+                                    </h6>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                                            <i class="bi bi-key me-2"></i>Сменить пароль
+                                        </button>
+                                        <a href="{{ url_for('view_logs') }}" class="btn btn-outline-info">
+                                            <i class="bi bi-journal-text me-2"></i>Просмотр логов
+                                        </a>
+                                        <a href="{{ url_for('export_data') }}" class="btn btn-outline-success">
+                                            <i class="bi bi-download me-2"></i>Экспорт данных
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Опасные операции -->
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm border-danger mb-4">
+                                <div class="card-header bg-danger text-white">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-exclamation-triangle me-2"></i>Опасные операции
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted small mb-3">
+                                        Эти действия могут привести к необратимой потере данных. 
+                                        Выполняйте их только при крайней необходимости.
+                                    </p>
+                                    
+                                    <!-- Сброс анализов в актуальные -->
+                                    <div class="mb-3">
+                                        <h6 class="mb-2">
+                                            <i class="bi bi-arrow-clockwise me-2"></i>Сбросить все анализы
+                                        </h6>
+                                        <p class="small text-muted mb-2">
+                                            Вернет все анализы в статус "Актуальные". Не удаляет записи из базы.
+                                        </p>
+                                        <form method="GET" action="{{ url_for('reset_all') }}" class="d-inline">
+                                            <button type="submit" class="btn btn-warning btn-sm" onclick="return confirm('Вы уверены, что хотите сбросить все анализы в     статус \"Актуальные\"?')">
+                                                <i class="bi bi-arrow-clockwise me-1"></i>Сбросить анализы
+                                            </button>
+                                        </form>
+                                    </div>
+                                    
+                                    <hr class="my-4">
+                                    
+                                    <!-- Полный сброс базы данных -->
+                                    <div>
+                                        <h6 class="mb-2 text-danger">
+                                            <i class="bi bi-trash3 me-2"></i>Полный сброс базы данных
+                                        </h6>
+                                        <p class="small text-danger mb-2">
+                                            ⚠️ Удалит ВСЕ анализы и врачей, заменив врачей на список по умолчанию.
+                                        </p>
+                                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#resetDatabaseModal">
+                                            <i class="bi bi-trash3 me-1"></i>Сбросить базу данных
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Статистика системы -->
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <h6 class="card-title mb-3">
+                                        <i class="bi bi-database me-2"></i>Статистика системы
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">Анализов</small>
+                                            <strong class="fs-5">{{ total_analyses }}</strong>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">Врачей</small>
+                                            <strong class="fs-5">{{ doctors|length }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">
+                        <i class="bi bi-box-arrow-right me-1"></i>Выйти из системы
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно подтверждения сброса базы данных -->
+    <div class="modal fade" id="resetDatabaseModal" tabindex="-1" aria-labelledby="resetDatabaseModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="resetDatabaseModalLabel">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Подтверждение сброса базы данных
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <form method="POST" action="{{ url_for('reset_database') }}" id="resetDatabaseForm">
+                    <div class="modal-body">
+                        <div class="alert alert-danger">
+                            <h6 class="alert-heading">
+                                <i class="bi bi-exclamation-octagon-fill me-2"></i>Внимание! Это опасная операция!
+                            </h6>
+                            <p class="mb-0 small">
+                                Это действие приведет к удалению всех анализов и врачей из базы данных. 
+                                Восстановить данные будет невозможно!
+                            </p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="mb-3">Будут удалены:</h6>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>
+                                        <i class="bi bi-clipboard-data text-danger me-2"></i>
+                                        Все анализы
+                                    </span>
+                                    <span class="badge bg-danger rounded-pill">{{ total_analyses }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>
+                                        <i class="bi bi-person text-danger me-2"></i>
+                                        Все врачи
+                                    </span>
+                                    <span class="badge bg-danger rounded-pill">{{ doctors|length }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6 class="mb-2">
+                                <i class="bi bi-key me-2"></i>Введите пароль для подтверждения
+                            </h6>
+                            <input type="password" class="form-control mb-2" name="password" 
+                                   placeholder="Пароль" required>
+                            <input type="password" class="form-control" name="confirm_password" 
+                                   placeholder="Повторите пароль" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6 class="mb-2">
+                                <i class="bi bi-chat-square-text me-2"></i>Текстовое подтверждение
+                            </h6>
+                            <input type="text" class="form-control" name="confirmation" 
+                                   placeholder='Введите "сбросить базу данных"' required>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                            <label class="form-check-label text-danger" for="confirmDelete">
+                                <strong>Я понимаю, что это действие необратимо и удалит все данные</strong>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="submit" class="btn btn-danger" id="resetDatabaseButton">
+                            <i class="bi bi-trash3 me-1"></i>Сбросить базу данных
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно смены пароля (заглушка) -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-key me-2"></i>Смена пароля
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Функция смены пароля временно недоступна. Обратитесь к системному администратору.
+                    </div>
+                    <p class="text-muted small">
+                        Текущие учетные данные:<br>
+                        <strong>Логин:</strong> Malvin_42<br>
+                        <strong>Пароль:</strong> 585188
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Футер -->
-    <footer class="mt-5 py-3" style="background: linear-gradient(135deg, var(--malvin-blue) 0%, var(--malvin-light-blue) 100%);">
+    <footer class="mt-5 py-4" style="background: linear-gradient(135deg, var(--malvin-blue) 0%, var(--malvin-light-blue) 100%);">
         <div class="container-fluid">
             <div class="row align-items-center">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="d-flex align-items-center">
                         <img src="{{ url_for('static', filename='logo.png') }}" alt="Malvin Vet Logo" height="30" class="me-2" onerror="this.style.display='none'">
                         <div class="text-light">
                             <strong>Malvin Vet Analytics System</strong>
-                            <small class="d-block opacity-75 mt-1">© 2025 Все права защищены</small>
+                            <small class="d-block opacity-75 mt-1">© 2024 Все права защищены</small>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-6 text-md-end">
+                <div class="col-md-4 text-center">
+                    <a href="https://github.com/FeirlyMoore" target="_blank" class="footer-developer">
+                        <i class="bi bi-github me-1"></i>Developed by Feirly Moore
+                    </a>
+                </div>
+                <div class="col-md-4 text-md-end">
                     <small class="text-light opacity-75">
-                        Версия 1.0 | 
+                        Версия 1.2 | 
                         <i class="bi bi-cpu ms-2 me-1"></i>Всего анализов: {{ total_analyses }}
                         {% if selected_doctor or search_query or date_filter %}
                         <br><i class="bi bi-funnel ms-2 me-1"></i>Фильтры применены
@@ -856,7 +1525,144 @@
                     this.style.display = 'none';
                 });
             }
+            
+            // Обработка модального окна подтверждения звонка
+            const confirmCallModal = document.getElementById('confirmCallModal');
+            if (confirmCallModal) {
+                confirmCallModal.addEventListener('show.bs.modal', function(event) {
+                    // Кнопка, которая вызвала модальное окно
+                    const button = event.relatedTarget;
+                    
+                    // Извлекаем информацию из data-* атрибутов
+                    const analysisId = button.getAttribute('data-analysis-id');
+                    const clientSurname = button.getAttribute('data-client-surname');
+                    const petName = button.getAttribute('data-pet-name');
+                    const analysisType = button.getAttribute('data-analysis-type');
+                    const doctorName = button.getAttribute('data-doctor-name');
+                    const createdAt = button.getAttribute('data-created-at');
+                    
+                    // Обновляем содержимое модального окна
+                    document.getElementById('modalCallAnalysisId').value = analysisId;
+                    document.getElementById('modalCallClientSurname').textContent = clientSurname;
+                    document.getElementById('modalCallPetName').textContent = petName;
+                    document.getElementById('modalCallAnalysisType').textContent = analysisType;
+                    document.getElementById('modalCallDoctorName').textContent = doctorName;
+                    document.getElementById('modalCallCreatedAt').textContent = createdAt;
+                    
+                    // Обновляем action формы
+                    const form = document.getElementById('confirmCallForm');
+                    form.action = `/analysis/${analysisId}/mark_called`;
+                });
+                
+                // Обработка нажатия кнопки подтверждения
+                const confirmCallButton = document.getElementById('confirmCallButton');
+                if (confirmCallButton) {
+                    confirmCallButton.addEventListener('click', function() {
+                        document.getElementById('confirmCallForm').submit();
+                    });
+                }
+            }
+            
+            // Обработка модального окна подтверждения удаления
+            const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+            if (confirmDeleteModal) {
+                confirmDeleteModal.addEventListener('show.bs.modal', function(event) {
+                    // Кнопка, которая вызвала модальное окно
+                    const button = event.relatedTarget;
+                    
+                    // Извлекаем информацию из data-* атрибутов
+                    const analysisId = button.getAttribute('data-analysis-id');
+                    const clientSurname = button.getAttribute('data-client-surname');
+                    const petName = button.getAttribute('data-pet-name');
+                    const analysisType = button.getAttribute('data-analysis-type');
+                    const doctorName = button.getAttribute('data-doctor-name');
+                    const createdAt = button.getAttribute('data-created-at');
+                    const analysisStatus = button.getAttribute('data-analysis-status');
+                    
+                    // Переводим статус на русский
+                    let statusText = 'Неизвестно';
+                    if (analysisStatus === 'actual') {
+                        statusText = 'Актуальный';
+                    } else if (analysisStatus === 'processed') {
+                        statusText = 'Обработанный';
+                    }
+                    
+                    // Обновляем содержимое модального окна
+                    document.getElementById('modalDeleteAnalysisId').value = analysisId;
+                    document.getElementById('modalDeleteClientSurname').textContent = clientSurname;
+                    document.getElementById('modalDeletePetName').textContent = petName;
+                    document.getElementById('modalDeleteAnalysisType').textContent = analysisType;
+                    document.getElementById('modalDeleteDoctorName').textContent = doctorName;
+                    document.getElementById('modalDeleteCreatedAt').textContent = createdAt;
+                    document.getElementById('modalDeleteAnalysisStatus').textContent = statusText;
+                    
+                    // Обновляем action формы
+                    const form = document.getElementById('confirmDeleteForm');
+                    form.action = `/analysis/${analysisId}/delete`;
+                });
+                
+                // Обработка нажатия кнопки подтверждения удаления
+                const confirmDeleteButton = document.getElementById('confirmDeleteButton');
+                if (confirmDeleteButton) {
+                    confirmDeleteButton.addEventListener('click', function() {
+                        document.getElementById('confirmDeleteForm').submit();
+                    });
+                }
+            }
         });
+
+        // Проверка формы сброса базы данных
+        const resetDatabaseForm = document.getElementById('resetDatabaseForm');
+        if (resetDatabaseForm) {
+            const resetDatabaseButton = document.getElementById('resetDatabaseButton');
+            const confirmCheckbox = document.getElementById('confirmDelete');
+            
+            // Отключаем кнопку по умолчанию
+            resetDatabaseButton.disabled = true;
+            
+            // Включаем кнопку только при установленном чекбоксе
+            confirmCheckbox.addEventListener('change', function() {
+                resetDatabaseButton.disabled = !this.checked;
+            });
+            
+            // Валидация формы перед отправкой
+            resetDatabaseForm.addEventListener('submit', function(e) {
+                const password = this.querySelector('input[name="password"]').value;
+                const confirmPassword = this.querySelector('input[name="confirm_password"]').value;
+                const confirmation = this.querySelector('input[name="confirmation"]').value;
+                
+                // Проверка пароля
+                if (password !== 'FeirlyMoore_42') {
+                    alert('Неверный пароль!');
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Проверка совпадения паролей
+                if (password !== confirmPassword) {
+                    alert('Пароли не совпадают!');
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Проверка текстового подтверждения
+                if (confirmation.toLowerCase() !== 'сбросить базу данных') {
+                    alert('Неверное текстовое подтверждение! Введите: "сбросить базу данных"');
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Финальное подтверждение
+                if (!confirm('❗ ВНИМАНИЕ! Это действие удалит ВСЕ данные без возможности восстановления. Вы уверены?')) {
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Показать индикатор загрузки
+                resetDatabaseButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Сброс...';
+                resetDatabaseButton.disabled = true;
+            });
+        }
     </script>
 </body>
 </html>

@@ -8,6 +8,23 @@
     --success-color: #48bb78;
     --warning-color: #ed8936;
     --danger-color: #f56565;
+    --malvin-blue: #1a365d;
+    --malvin-light-blue: #2c5282;
+    --malvin-accent: #ff770f;
+    --malvin-success: #ff770f;
+    --malvin-warning: #ed8936;
+                --malvin-blue: #1a365d;
+            --malvin-light-blue: #2c5282;
+            --malvin-accent: #ff770f;
+            --malvin-success: #ff770f;
+            --malvin-warning: #ed8936;
+            --malvin-danger: #dc3545;
+            --blood-color: #dc3545; /* Красный для крови */
+            --urine-color: #ffc107; /* Жёлтый для мочи */
+            --feces-color: #8B4513; /* Коричневый для кала */
+            --vet-union-color: #0d6efd; /* Синий для Вет Юнион */
+            --dermatology-color: #99ff99; /* HEX#99ff99 для дерматологии */
+            --manual-color: #8b00ff; /* HEX#8b00ff для добавленных вручную */
 }
 
 * {
@@ -236,4 +253,705 @@ body {
         padding: 0.4rem 0.8rem;
         font-size: 14px;
     }
+}
+        
+.navbar-logo {
+    height: 40px;
+    margin-right: 10px;
+}
+
+.stats-card {
+    border-left: 4px solid var(--malvin-accent);
+}
+
+.analysis-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.action-btn {
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.doctor-progress {
+    height: 8px;
+    border-radius: 4px;
+}
+
+.tab-content {
+    min-height: 400px;
+}
+
+.empty-state {
+    padding: 4rem 2rem;
+    text-align: center;
+    color: #6c757d;
+}
+
+.filter-card {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.table tbody tr:hover {
+    background-color: rgba(255, 119, 15, 0.05);
+}
+
+.date-input {
+    font-family: monospace;
+}
+
+/* Стили для кнопок действий в таблице */
+.action-buttons-group {
+    display: flex;
+    gap: 4px; /* Отступ между кнопками */
+}
+
+.action-buttons-group .btn {
+    border-radius: 4px !important; /* Скругленные края для всех кнопок */
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.action-buttons-group .btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.action-buttons-group .btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
+.action-buttons-group .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.action-buttons-group .btn-primary:hover {
+    background-color: #0069d9;
+    border-color: #0062cc;
+}
+
+.action-buttons-group .btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.action-buttons-group .btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
+
+/* Стили для выравнивания фильтров */
+.filter-row {
+    align-items: flex-end;
+}
+
+.filter-label {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.filter-buttons {
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.filter-buttons .btn {
+    height: 38px; /* Такая же высота как у инпутов */
+}
+
+/* Логотип в навбаре */
+.navbar-brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.navbar-brand-logo img {
+    height: 42px;
+    width: auto;
+    object-fit: contain;
+}
+
+.navbar-brand-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.navbar-brand-text .brand-name {
+    font-weight: 700;
+    font-size: 1.2rem;
+    line-height: 1.2;
+}
+
+.navbar-brand-text .brand-subtitle {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    line-height: 1.2;
+}
+
+/* Улучшенные вкладки */
+.nav-tabs .nav-link {
+    border-radius: 8px 8px 0 0;
+    padding: 12px 20px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: white;
+    border-bottom-color: white;
+    color: var(--malvin-blue);
+    font-weight: 600;
+}
+
+.nav-tabs .nav-link:not(.active):hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Карточка быстрых действий */
+.quick-actions-card .btn {
+    border-radius: 6px;
+    padding: 8px 16px;
+}
+
+/* Стили для модального окна подтверждения */
+.confirm-modal-icon {
+    font-size: 3rem;
+    color: var(--malvin-accent);
+    margin-bottom: 1rem;
+}
+
+.confirm-modal-content {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.confirm-modal-header {
+    background: linear-gradient(135deg, var(--malvin-blue) 0%, var(--malvin-light-blue) 100%);
+    color: white;
+    border-bottom: none;
+    padding: 1.5rem;
+}
+
+.confirm-modal-body {
+    padding: 2rem;
+    text-align: center;
+}
+
+.confirm-modal-footer {
+    border-top: 1px solid #dee2e6;
+    padding: 1.5rem;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.analysis-details {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    text-align: left;
+}
+
+.detail-row {
+    display: flex;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.detail-row:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #495057;
+    min-width: 120px;
+}
+
+.detail-value {
+    color: #212529;
+    flex-grow: 1;
+}
+
+        :root {
+
+        }
+        
+        .navbar-logo {
+            height: 40px;
+            margin-right: 10px;
+        }
+        
+        .stats-card {
+            border-left: 4px solid var(--malvin-accent);
+        }
+        
+        .analysis-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        /* Стили для цветов анализов */
+        .badge-blood {
+            background-color: var(--blood-color) !important;
+            border-color: var(--blood-color) !important;
+        }
+        
+        .badge-urine {
+            background-color: var(--urine-color) !important;
+            border-color: var(--urine-color) !important;
+            color: #212529 !important;
+        }
+        
+        .badge-feces {
+            background-color: var(--feces-color) !important;
+            border-color: var(--feces-color) !important;
+        }
+        
+        .badge-vet-union {
+            background-color: var(--vet-union-color) !important;
+            border-color: var(--vet-union-color) !important;
+        }
+        
+        .badge-dermatology {
+            background-color: var(--dermatology-color) !important;
+            border-color: var(--dermatology-color) !important;
+            color: #212529 !important;
+        }
+        
+        .badge-manual {
+            background-color: var(--manual-color) !important;
+            border-color: var(--manual-color) !important;
+        }
+        
+        .badge-cytology {
+            background-color: #17a2b8 !important;
+            border-color: #17a2b8 !important;
+        }
+        
+        .badge-histology {
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
+        }
+        
+        .action-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .doctor-progress {
+            height: 8px;
+            border-radius: 4px;
+        }
+        
+        .tab-content {
+            min-height: 400px;
+        }
+        
+        .empty-state {
+            padding: 4rem 2rem;
+            text-align: center;
+            color: #6c757d;
+        }
+        
+        .filter-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(255, 119, 15, 0.05);
+        }
+        
+        .date-input {
+            font-family: monospace;
+        }
+        
+        /* Стили для кнопок действий в таблице */
+        .action-buttons-group {
+            display: flex;
+            gap: 4px; /* Отступ между кнопками */
+        }
+        
+        .action-buttons-group .btn {
+            border-radius: 4px !important; /* Скругленные края для всех кнопок */
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        
+        .action-buttons-group .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+        
+        .action-buttons-group .btn-success:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+        
+        .action-buttons-group .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        
+        .action-buttons-group .btn-primary:hover {
+            background-color: #0069d9;
+            border-color: #0062cc;
+        }
+        
+        .action-buttons-group .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+        
+        .action-buttons-group .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+        
+        /* Стили для выравнивания фильтров */
+        .filter-row {
+            align-items: center;
+            margin-bottom: 0;
+        }
+        
+        .filter-label {
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+        
+        .filter-buttons {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 1.5rem;
+        }
+        
+        .filter-buttons .btn {
+            height: 38px; /* Такая же высота как у инпутов */
+        }
+        
+        .reset-btn {
+            color: #dc3545 !important;
+            border-color: #dc3545 !important;
+            background-color: transparent !important;
+        }
+        
+        .reset-btn:hover {
+            background-color: #dc3545 !important;
+            color: white !important;
+        }
+        
+        /* Компактные стили для фильтров */
+        .compact-filters .col-md-3 {
+            padding-bottom: 0.5rem;
+        }
+        
+        /* Логотип в навбаре */
+        .navbar-brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .navbar-brand-logo img {
+            height: 42px;
+            width: auto;
+            object-fit: contain;
+        }
+        
+        .navbar-brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .navbar-brand-text .brand-name {
+            font-weight: 700;
+            font-size: 1.2rem;
+            line-height: 1.2;
+        }
+        
+        .navbar-brand-text .brand-subtitle {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            line-height: 1.2;
+        }
+        
+        /* Улучшенные вкладки с оранжевой линией */
+        .nav-tabs {
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .nav-tabs .nav-link {
+            border-radius: 8px 8px 0 0;
+            padding: 12px 20px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            border-bottom: none;
+            position: relative;
+            margin-bottom: -1px;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background-color: white;
+            border-color: #dee2e6 #dee2e6 white;
+            color: var(--malvin-blue);
+            font-weight: 600;
+        }
+        
+        .nav-tabs .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background-color: var(--malvin-accent);
+            border-radius: 3px 3px 0 0;
+        }
+        
+        .nav-tabs .nav-link:not(.active):hover {
+            background-color: rgba(255, 119, 15, 0.05);
+            border-color: rgba(255, 119, 15, 0.2);
+        }
+        
+        /* Карточка быстрых действий */
+        .quick-actions-card .btn {
+            border-radius: 6px;
+            padding: 8px 16px;
+        }
+        
+        /* Общие стили для модальных окон подтверждения */
+        .confirm-modal-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .confirm-modal-content {
+            border-radius: 12px;
+            overflow: hidden;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .confirm-modal-header {
+            border-bottom: none;
+            padding: 1.5rem;
+        }
+        
+        .confirm-modal-body {
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .confirm-modal-footer {
+            border-top: 1px solid #dee2e6;
+            padding: 1.5rem;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .analysis-details {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            text-align: left;
+        }
+        
+        .detail-row {
+            display: flex;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .detail-row:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: #495057;
+            min-width: 120px;
+        }
+        
+        .detail-value {
+            color: #212529;
+            flex-grow: 1;
+        }
+        
+        /* Специфичные стили для модального окна звонка */
+        .call-modal-header {
+            background: linear-gradient(135deg, var(--malvin-blue) 0%, var(--malvin-light-blue) 100%);
+            color: white;
+        }
+        
+        .call-modal-icon {
+            color: var(--malvin-accent);
+        }
+        
+        /* Специфичные стили для модального окна удаления */
+        .delete-modal-header {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+        
+        .delete-modal-icon {
+            color: #dc3545;
+        }
+        
+        .warning-text {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        .warning-note {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: left;
+        }
+        
+        .warning-note i {
+            color: #856404;
+        }
+        
+        /* Липкая панель статистики */
+        .sticky-sidebar {
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+        
+        .sticky-sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .sticky-sidebar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        
+        .sticky-sidebar::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        
+        .sticky-sidebar::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        /* Футер с разработчиком */
+        .footer-developer {
+            color: white !important;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            opacity: 0.9;
+        }
+        
+        .footer-developer:hover {
+            color: white !important;
+            opacity: 1;
+            text-decoration: none;
+        }
+        
+        /* Медиа-запросы для адаптивности */
+        @media (max-width: 991.98px) {
+            .sticky-sidebar {
+                position: static;
+                max-height: none;
+                overflow-y: visible;
+            }
+            
+            .filter-buttons {
+                margin-top: 0;
+            }
+        }
+        
+        @media (max-width: 767.98px) {
+            .compact-filters .col-md-3 {
+                padding-bottom: 1rem;
+            }
+            
+            .filter-buttons {
+                justify-content: center;
+            }
+            
+            .nav-tabs .nav-link {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Стили для модальных окон управления аккаунтом */
+#userMenuModal .card {
+    border-radius: 10px;
+}
+
+#resetDatabaseModal .list-group-item {
+    border-color: #f1f1f1;
+}
+
+#resetDatabaseModal .form-control:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+}
+
+#resetDatabaseButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Стили для подтверждения сброса */
+#confirmDelete:checked {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+/* Стиль для имени пользователя с курсором-указателем */
+.text-light[data-bs-toggle="modal"] {
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.text-light[data-bs-toggle="modal"]:hover {
+    opacity: 0.9;
 }
