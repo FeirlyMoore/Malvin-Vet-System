@@ -2,6 +2,7 @@
 
 ## Структура проекта
 
+<pre>
 malvin-vet-analytics/
 │
 ├── templates/                  # HTML шаблоны
@@ -30,6 +31,7 @@ malvin-vet-analytics/
 ├── app.py                    # Основное приложение Flask
 ├── requirements.txt          # Зависимости Python
 └── README.md                 # Документация
+</pre>
 
 <div align="center">
   
