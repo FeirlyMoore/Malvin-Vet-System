@@ -153,6 +153,7 @@ body {
     padding: 0.35em 0.65em;
     font-weight: 500;
     border-radius: 20px;
+    font-size: 0.85rem;
 }
 
 .badge-warning {
