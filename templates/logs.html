@@ -630,7 +630,7 @@
                 </div>
                 <div class="col-md-4 text-md-end">
                     <small class="text-light opacity-75">
-                        Версия 1.0 | 
+                        Версия 1.2 | 
                         <i class="bi bi-journal-text ms-2 me-1"></i>Файлов логов: {{ log_files|length if log_files else 0 }}
                         {% if log_files %}
                         <br><i class="bi bi-list-check ms-2 me-1"></i>Записей: {{ log_files|sum(attribute='record_count') }}
