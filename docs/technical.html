@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Фавикон -->
+    <link rel="shortcut icon" href="https://static.tildacdn.com/tild3931-3964-4333-a139-616331303063/favicon.ico" type="image/x-icon"> 
+    <link rel="apple-touch-icon" href="https://static.tildacdn.com/tild6461-3331-4337-b635-306361643663/304.png"> 
+    <link rel="apple-touch-icon" sizes="76x76" href="https://static.tildacdn.com/tild6461-3331-4337-b635-306361643663/304.png"> 
+    <link rel="apple-touch-icon" sizes="152x152" href="https://static.tildacdn.com/tild6461-3331-4337-b635-306361643663/304.png"> 
+    <link rel="apple-touch-startup-image" href="https://static.tildacdn.com/tild6461-3331-4337-b635-306361643663/304.png"> 
+    <meta name="msapplication-TileColor" content="#000000"> 
+    <meta name="msapplication-TileImage" content="https://static.tildacdn.com/tild3061-3563-4638-a463-663764313862/540.png">
+
+    <title>Malvin Vet Analytics - Полная техническая документация</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0e6ba8;
+            --primary-dark: #0a4d7a;
+            --secondary: #f8f9fa;
+            --accent: #ff6b6b;
+            --text-dark: #333;
+            --text-light: #666;
+            --border: #e1e5eb;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --info: #17a2b8;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            color: var(--text-dark);
+            line-height: 1.6;
+            background-color: #f9f9f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            counter-reset: section-counter;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--primary-dark);
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+            counter-increment: section-counter;
+            position: relative;
+            padding-left: 40px;
+        }
+        
+        h2:before {
+            content: counter(section-counter) ".";
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: 700;
+        }
+        
+        h3 {
+            font-size: 1.3rem;
+            margin-top: 1.5rem;
+            color: var(--primary-dark);
+        }
+        
+        h4 {
+            font-size: 1.1rem;
+            margin-top: 1rem;
+            color: var(--text-dark);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            width: 100%;
+        }
+        
+        /* Header */
+        header {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+        
+        .logo-text {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: var(--primary);
+        }
+        
+        .logo-text span {
+            color: var(--accent);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 25px;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 500;
+            font-family: 'Montserrat', sans-serif;
+            transition: color 0.3s;
+            padding: 8px 5px;
+            font-size: 0.95rem;
+        }
+        
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+        
+        .nav-links a.active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+            padding: 30px 0 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        
+        .document-header {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .doc-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .meta-label {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+        
+        .meta-value {
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+        
+        /* Content Sections */
+        .content-section {
+            padding: 25px 0;
+        }
+        
+        .section-content {
+            background-color: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+            border-left: 4px solid var(--info);
+        }
+        
+        .section-content.warning {
+            border-left-color: var(--warning);
+        }
+        
+        .section-content.danger {
+            border-left-color: var(--danger);
+        }
+        
+        .section-content.success {
+            border-left-color: var(--success);
+        }
+        
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.25rem 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            font-size: 0.95rem;
+            border: 1px solid var(--border);
+        }
+        
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: var(--primary-dark);
+            border-bottom: 2px solid var(--border);
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        td:last-child, th:last-child {
+            border-right: none;
+        }
+        
+        /* Code blocks */
+        pre {
+            background-color: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            border-left: 3px solid var(--primary);
+            border: 1px solid var(--border);
+        }
+        
+        code {
+            background-color: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #0f172a;
+            border: 1px solid #ddd;
+        }
+        
+        /* Diagrams and Structure */
+        .architecture-diagram {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border);
+            font-family: monospace;
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+        
+        /* Lists */
+        ul, ol {
+            margin-left: 20px;
+            margin-bottom: 1.25rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+            line-height: 1.6;
+        }
+        
+        /* Footnotes and Notes */
+        .note {
+            background-color: #fff3cd;
+            border-left: 4px solid var(--warning);
+            padding: 12px 15px;
+            margin: 1rem 0;
+            border-radius: 4px;
+            font-size: 0.95rem;
+        }
+        
+        .note strong {
+            color: #856404;
+        }
+        
+        .important {
+            background-color: #f8d7da;
+            border-left: 4px solid var(--danger);
+            padding: 12px 15px;
+            margin: 1rem 0;
+            border-radius: 4px;
+            font-size: 0.95rem;
+        }
+        
+        .important strong {
+            color: #721c24;
+        }
+        
+        /* Process Steps */
+        .process-steps {
+            margin: 1.5rem 0;
+            counter-reset: step-counter;
+        }
+        
+        .step {
+            display: flex;
+            margin-bottom: 1rem;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .step-number {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 12px;
+            font-size: 0.85rem;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--primary-dark);
+            color: white;
+            padding: 30px 0 15px;
+            margin-top: auto;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .footer-section h4 {
+            color: white;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        
+        .footer-section p, .footer-section a {
+            color: #ddd;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 8px;
+            transition: color 0.3s;
+            font-size: 0.9rem;
+        }
+        
+        .footer-section a:hover {
+            color: white;
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.85rem;
+            color: #ccc;
+        }
+        
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+        
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-draft {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-confidential {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        /* TOC */
+        .toc {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border);
+        }
+        
+        .toc h3 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+        
+        .toc ul {
+            margin-left: 15px;
+        }
+        
+        .toc li {
+            margin-bottom: 5px;
+        }
+        
+        .toc a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-container {
+                flex-direction: column;
+                gap: 12px;
+                padding: 10px 0;
+            }
+            
+            .nav-links {
+                gap: 15px;
+            }
+            
+            .hero {
+                padding: 20px 0 15px;
+            }
+            
+            .content-section {
+                padding: 15px 0;
+            }
+            
+            .section-content {
+                padding: 18px;
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            h2 {
+                font-size: 1.3rem;
+                margin-top: 1.5rem;
+                padding-left: 35px;
+            }
+            
+            h2:before {
+                font-size: 0.9em;
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            th, td {
+                padding: 8px 10px;
+                font-size: 0.9rem;
+            }
+            
+            pre {
+                padding: 12px;
+                font-size: 0.85rem;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .doc-meta {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 15px;
+            }
+            
+            .nav-links {
+                gap: 12px;
+            }
+            
+            .nav-links a {
+                font-size: 0.9rem;
+                padding: 6px 3px;
+            }
+            
+            .logo-text {
+                font-size: 1.2rem;
+            }
+            
+            h2 {
+                padding-left: 30px;
+            }
+        }
+        
+        /* Print styles */
+        @media print {
+            header, footer, .nav-links {
+                display: none;
+            }
+            
+            .container {
+                max-width: 100%;
+                padding: 0;
+            }
+            
+            body {
+                background-color: white;
+                font-size: 12pt;
+            }
+            
+            h1, h2, h3, h4 {
+                page-break-after: avoid;
+            }
+            
+            .section-content {
+                box-shadow: none;
+                border: 1px solid #ddd;
+                page-break-inside: avoid;
+            }
+            
+            table {
+                page-break-inside: avoid;
+            }
+            
+            pre {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <div class="logo-text">MALVIN<span>VET</span> Analytics</div>
+            </a>
+            <nav class="nav-links">
+                <a href="index.html">Руководство пользователя</a>
+                <a href="#" class="active">Техническая документация</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Document Header -->
+        <section class="hero">
+            <div class="document-header">
+                <h1>МАЛВИН ВЕТ АНАЛИТИКС СИСТЕМА - ПОЛНАЯ ТЕХНИЧЕСКАЯ ДОКУМЕНТАЦИЯ</h1>
+                
+                <div class="doc-meta">
+                    <div class="meta-item">
+                        <span class="meta-label">Документ №:</span>
+                        <span class="meta-value">MVA-DOC-001-2025</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Версия:</span>
+                        <span class="meta-value">1.2 <span class="status-badge status-active">ДЕЙСТВУЮЩИЙ</span></span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Дата публикации:</span>
+                        <span class="meta-value" id="current-date"></span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Уровень конфиденциальности:</span>
+                        <span class="meta-value"><span class="status-badge status-confidential">ДЛЯ СЛУЖЕБНОГО ПОЛЬЗОВАНИЯ</span></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Table of Contents -->
+        <div class="toc">
+            <h3><i class="fas fa-list"></i> ОГЛАВЛЕНИЕ</h3>
+            <ul>
+                <li><a href="#section1">РАЗДЕЛ 1. ОБЩИЕ ПОЛОЖЕНИЯ</a></li>
+                <li><a href="#section2">РАЗДЕЛ 2. ТЕХНИЧЕСКИЕ ХАРАКТЕРИСТИКИ</a></li>
+                <li><a href="#section3">РАЗДЕЛ 3. УСТАНОВКА И НАСТРОЙКА</a></li>
+                <li><a href="#section4">РАЗДЕЛ 4. ФУНКЦИОНАЛЬНЫЕ ВОЗМОЖНОСТИ</a></li>
+                <li><a href="#section5">РАЗДЕЛ 5. БАЗА ДАННЫХ</a></li>
+                <li><a href="#section6">РАЗДЕЛ 6. ИНТЕРФЕЙС ПОЛЬЗОВАТЕЛЯ</a></li>
+                <li><a href="#section7">РАЗДЕЛ 7. ЛОГИРОВАНИЕ И АУДИТ</a></li>
+                <li><a href="#section8">РАЗДЕЛ 8. БЕЗОПАСНОСТЬ</a></li>
+                <li><a href="#section9">РАЗДЕЛ 9. ЭКСПЛУАТАЦИЯ И ТЕХОБСЛУЖИВАНИЕ</a></li>
+                <li><a href="#section10">РАЗДЕЛ 10. АВАРИЙНЫЕ СИТУАЦИИ</a></li>
+                <li><a href="#section11">РАЗДЕЛ 11. ОБУЧЕНИЕ И ПОДДЕРЖКА</a></li>
+                <li><a href="#appendix">ПРИЛОЖЕНИЯ</a></li>
+            </ul>
+        </div>
+
+        <!-- SECTION 1 -->
+        <section id="section1" class="content-section">
+            <h2>ОБЩИЕ ПОЛОЖЕНИЯ</h2>
+            
+            <div class="section-content">
+                <h3>1.1. НАЗНАЧЕНИЕ ДОКУМЕНТАЦИИ</h3>
+                <p>Настоящий документ является официальной технической документацией системы автоматизированного учета и управления анализами ветеринарной клиники "Malvin Vet Analytics" (далее – Система). Документация устанавливает технические требования, функциональные характеристики, правила эксплуатации и технического обслуживания Системы.</p>
+                
+                <h3>1.2. ОБЛАСТЬ ПРИМЕНЕНИЯ</h3>
+                <p>Документация предназначена для:</p>
+                <ol>
+                    <li>Технического персонала, ответственного за развертывание и сопровождение Системы</li>
+                    <li>Администраторов и операторов Системы</li>
+                    <li>Пользователей Системы (врачей ветеринарной клиники)</li>
+                    <li>Руководящего состава клиники</li>
+                    <li>Технической поддержки и службы ИТ</li>
+                </ol>
+                
+                <h3>1.3. СОКРАЩЕНИЯ И ОПРЕДЕЛЕНИЯ</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Термин</th>
+                            <th>Определение</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Система</strong></td>
+                            <td>Malvin Vet Analytics System</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Анализ</strong></td>
+                            <td>Запись о лабораторном исследовании животного</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Врач</strong></td>
+                            <td>Авторизованный пользователь с правами обработки анализов</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Оператор</strong></td>
+                            <td>Авторизованный пользователь с правами управления данными</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Администратор</strong></td>
+                            <td>Пользователь с полными правами доступа</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Лог</strong></td>
+                            <td>Системная запись о действии пользователя</td>
+                        </tr>
+                        <tr>
+                            <td><strong>CSV</strong></td>
+                            <td>Формат файла данных (Comma-Separated Values)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>API</strong></td>
+                            <td>Интерфейс программирования приложений</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SQLite</strong></td>
+                            <td>Встроенная система управления базами данных</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h3>1.4. НОРМАТИВНЫЕ ССЫЛКИ</h3>
+                <p>При разработке и эксплуатации Системы руководствуются:</p>
+                <ul>
+                    <li>Требованиями к обработке персональных данных</li>
+                    <li>Правилами ведения медицинской документации</li>
+                    <li>Техническими стандартами веб-разработки</li>
+                    <li>Требованиями информационной безопасности</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SECTION 2 -->
+        <section id="section2" class="content-section">
+            <h2>ТЕХНИЧЕСКИЕ ХАРАКТЕРИСТИКИ</h2>
+            
+            <div class="section-content">
+                <h3>2.1. АРХИТЕКТУРА СИСТЕМЫ</h3>
+                
+                <h4>2.1.1. Компонентная структура</h4>
+                <div class="architecture-diagram">
+                    <pre>┌─────────────────────────────────────────────────────────────┐
+│                    КЛИЕНТСКАЯ ЧАСТЬ                          │
+├─────────────────────────────────────────────────────────────┤
+│ • Веб-браузер (Chrome 90+, Firefox 88+, Safari 14+)         │
+│ • HTML5, CSS3, JavaScript ES6+                              │
+│ • Bootstrap 5.3.0                                           │
+│ • Bootstrap Icons 1.11.0                                    │
+└─────────────────────────────────────────────────────────────┘
+                               │
+┌─────────────────────────────────────────────────────────────┐
+│                    СЕРВЕРНАЯ ЧАСТЬ                           │
+├─────────────────────────────────────────────────────────────┤
+│ • Python 3.8+                                               │
+│ • Flask 2.3.3                                               │
+│ • Flask-SQLAlchemy 3.0.5                                    │
+│ • Gunicorn 21.2.0 (production)                              │
+│ • SQLite 3.35+                                              │
+└─────────────────────────────────────────────────────────────┘
+                               │
+┌─────────────────────────────────────────────────────────────┐
+│                    ХРАНИЛИЩЕ ДАННЫХ                          │
+├─────────────────────────────────────────────────────────────┤
+│ • База данных SQLite (malvin_vet.db)                        │
+│ • Директория загрузок (uploads/)                            │
+│ • Директория логов (emergency_logs/)                        │
+│ • Статические файлы (static/)                               │
+└─────────────────────────────────────────────────────────────┘</pre>
+                </div>
+                
+                <h4>2.1.2. Сетевые протоколы и порты</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Протокол</th>
+                            <th>Порт</th>
+                            <th>Назначение</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>HTTP</td>
+                            <td>80</td>
+                            <td>Веб-доступ</td>
+                            <td><span class="status-badge status-active">Обязательный</span></td>
+                        </tr>
+                        <tr>
+                            <td>HTTPS</td>
+                            <td>443</td>
+                            <td>Защищенный доступ</td>
+                            <td><span class="status-badge status-active">Рекомендуемый</span></td>
+                        </tr>
+                        <tr>
+                            <td>Custom</td>
+                            <td>5000</td>
+                            <td>Разработка/тестирование</td>
+                            <td><span class="status-badge">Опциональный</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h3>2.2. ТРЕБОВАНИЯ К ОБОРУДОВАНИЮ</h3>
+                
+                <h4>2.2.1. Минимальные требования для сервера</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Компонент</th>
+                            <th>Требование</th>
+                            <th>Обоснование</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Процессор</td>
+                            <td>1 ядро 2.0 GHz</td>
+                            <td>Базовые вычисления</td>
+                        </tr>
+                        <tr>
+                            <td>Оперативная память</td>
+                            <td>1 GB</td>
+                            <td>Обработка запросов</td>
+                        </tr>
+                        <tr>
+                            <td>Дисковое пространство</td>
+                            <td>10 GB</td>
+                            <td>Данные и логгирование</td>
+                        </tr>
+                        <tr>
+                            <td>Операционная система</td>
+                            <td>Ubuntu 20.04+</td>
+                            <td>Стабильность и поддержка</td>
+                        </tr>
+                        <tr>
+                            <td>Сетевое подключение</td>
+                            <td>10 Mbps</td>
+                            <td>Доступность для пользователей</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h4>2.2.2. Рекомендуемые характеристики</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Компонент</th>
+                            <th>Рекомендация</th>
+                            <th>Обоснование</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Процессор</td>
+                            <td>2 ядра 2.5+ GHz</td>
+                            <td>Производительность</td>
+                        </tr>
+                        <tr>
+                            <td>Оперативная память</td>
+                            <td>2 GB</td>
+                            <td>Многопользовательский режим</td>
+                        </tr>
+                        <tr>
+                            <td>Дисковое пространство</td>
+                            <td>25 GB</td>
+                            <td>Рост данных</td>
+                        </tr>
+                        <tr>
+                            <td>Резервное копирование</td>
+                            <td>Ежедневное</td>
+                            <td>Целостность данных</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h3>2.3. ПРОГРАММНЫЕ ТРЕБОВАНИЯ</h3>
+                
+                <h4>2.3.1. Зависимости системы</h4>
+                <pre><code>Python 3.8 или выше
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+pandas==2.0.3
+Werkzeug==2.3.7
+gunicorn==21.2.0 (для production)</code></pre>
+                
+                <h4>2.3.2. Требования к браузеру</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Браузер</th>
+                            <th>Минимальная версия</th>
+                            <th>Поддержка</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Google Chrome</td>
+                            <td>90</td>
+                            <td><span class="status-badge status-active">Полная</span></td>
+                        </tr>
+                        <tr>
+                            <td>Mozilla Firefox</td>
+                            <td>88</td>
+                            <td><span class="status-badge status-active">Полная</span></td>
+                        </tr>
+                        <tr>
+                            <td>Safari</td>
+                            <td>14</td>
+                            <td><span class="status-badge status-active">Полная</span></td>
+                        </tr>
+                        <tr>
+                            <td>Microsoft Edge</td>
+                            <td>90</td>
+                            <td><span class="status-badge status-active">Полная</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SECTION 3 -->
+        <section id="section3" class="content-section">
+            <h2>УСТАНОВКА И НАСТРОЙКА</h2>
+            
+            <div class="section-content">
+                <h3>3.1. ПРОЦЕДУРА УСТАНОВКИ</h3>
+                
+                <h4>3.1.1. Подготовительные мероприятия</h4>
+                <div class="process-steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div>Проверка соответствия оборудования минимальным требованиям</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div>Резервирование IP-адреса в сети организации</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div>Назначение ответственных лиц за установку и эксплуатацию</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div>Согласование времени проведения работ</div>
+                    </div>
+                </div>
+                
+                <h4>3.1.2. Последовательность установки</h4>
+                <div class="architecture-diagram">
+                    <pre>Этап 1: Подготовка операционной системы
+Этап 2: Установка зависимостей Python
+Этап 3: Развертывание кода приложения
+Этап 4: Настройка базы данных
+Этап 5: Конфигурация веб-сервера
+Этап 6: Настройка безопасности
+Этап 7: Тестирование функциональности
+Этап 8: Сдача в эксплуатацию</pre>
+                </div>
+                
+                <h3>3.2. КОНФИГУРАЦИОННЫЕ ФАЙЛЫ</h3>
+                
+                <h4>3.2.1. Основной файл конфигурации (app.py)</h4>
+                <pre><code># Конфигурационные параметры системы
+app.config['SECRET_KEY'] = 'защищенный-секретный-ключ'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///malvin_vet.db'
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024</code></pre>
+                
+                <h4>3.2.2. Файл зависимостей (requirements.txt)</h4>
+                <pre><code># Технические требования к версиям библиотек
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+pandas==2.0.3
+Werkzeug==2.3.7</code></pre>
+                
+                <h3>3.3. НАСТРОЙКА БЕЗОПАСНОСТИ</h3>
+                
+                <h4>3.3.1. Параметры аутентификации</h4>
+                <pre><code># Учетные данные по умолчанию
+USERNAME = '************'
+PASSWORD = '******************'
+
+# Примечание: Рекомендуется изменить при первом запуске</code></pre>
+                
+                <div class="important">
+                    <strong>ВАЖНО:</strong> Учетные данные по умолчанию должны быть изменены при первом запуске системы в продуктивной среде.
+                </div>
+                
+                <h4>3.3.2. Настройки сессии</h4>
+                <pre><code># Параметры сессии пользователя
+session['logged_in'] = True/False
+session['username'] = 'идентификатор пользователя'
+session.permanent = False  # Сессия не сохраняется постоянно</code></pre>
+            </div>
+        </section>
+
+        <!-- SECTION 4 -->
+        <section id="section4" class="content-section">
+            <h2>ФУНКЦИОНАЛЬНЫЕ ВОЗМОЖНОСТИ</h2>
+            
+            <div class="section-content">
+                <h3>4.1. МОДУЛЬ АУТЕНТИФИКАЦИИ</h3>
+                
+                <h4>4.1.1. Процедура входа в систему</h4>
+                <div class="process-steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div>Запрос аутентификации: Пользователь предоставляет учетные данные</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div>Верификация: Система проверяет соответствие учетных данных</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div>Создание сессии: При успешной аутентификации создается пользовательская сессия</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div>Перенаправление: Пользователь перенаправляется на главную страницу</div>
+                    </div>
+                </div>
+                
+                <h4>4.1.2. Процедура выхода из системы</h4>
+                <div class="process-steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div>Запрос завершения: Пользователь инициирует выход</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div>Очистка сессии: Все данные сессии удаляются</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div>Перенаправление: Пользователь перенаправляется на страницу входа</div>
+                    </div>
+                </div>
+                
+                <h3>4.2. МОДУЛЬ УПРАВЛЕНИЯ АНАЛИЗАМИ</h3>
+                
+                <h4>4.2.1. Типы анализов и цветовая кодировка</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Тип анализа</th>
+                            <th>HEX-код</th>
+                            <th>CSS-класс</th>
+                            <th>Назначение</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Кровь</strong></td>
+                            <td>#DC3545</td>
+                            <td>badge-blood</td>
+                            <td>Гематологические исследования</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Моча</strong></td>
+                            <td>#FFC107</td>
+                            <td>badge-urine</td>
+                            <td>Урологические исследования</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Кал</strong></td>
+                            <td>#8B4513</td>
+                            <td>badge-feces</td>
+                            <td>Копрологические исследования</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Вет Юнион</strong></td>
+                            <td>#0D6EFD</td>
+                            <td>badge-vet-union</td>
+                            <td>Внешние лабораторные исследования</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Дерматология</strong></td>
+                            <td>#99FF99</td>
+                            <td>badge-dermatology</td>
+                            <td>Дерматологические исследования</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Цитология</strong></td>
+                            <td>#17A2B8</td>
+                            <td>badge-cytology</td>
+                            <td>Цитологические исследования</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Гистология</strong></td>
+                            <td>#28A745</td>
+                            <td>badge-histology</td>
+                            <td>Гистологические исследования</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Ручное добавление</strong></td>
+                            <td>#8B00FF</td>
+                            <td>badge-manual</td>
+                            <td>Анализы, добавленные оператором</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h4>4.2.2. Статусы анализа</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Статус</th>
+                            <th>Описание</th>
+                            <th>Видимость</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>actual</strong></td>
+                            <td>Актуальный (требует обработки)</td>
+                            <td>Все пользователи</td>
+                        </tr>
+                        <tr>
+                            <td><strong>processed</strong></td>
+                            <td>Обработан (звонок совершен)</td>
+                            <td>Все пользователи</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h3>4.3. ПРОЦЕДУРНЫЕ ТРЕБОВАНИЯ</h3>
+                
+                <h4>4.3.1. Добавление нового анализа</h4>
+                <div class="architecture-diagram">
+                    <pre>Шаг 1: Авторизация пользователя
+Шаг 2: Переход в раздел "Добавить анализ"
+Шаг 3: Заполнение обязательных полей:
+  • Фамилия владельца (строка, обязательное)
+  • Кличка животного (строка, обязательное)
+  • Тип анализа (выбор из списка, обязательное)
+  • Врач (выбор из списка, обязательное)
+  • Примечания (текст, опциональное)
+Шаг 4: Подтверждение создания записи
+Шаг 5: Системное подтверждение успешного добавления</pre>
+                </div>
+                
+                <h3>4.4. ОГРАНИЧЕНИЯ И ЛИМИТЫ</h3>
+                
+                <h4>4.4.1. Ограничения по данным</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Параметр</th>
+                            <th>Значение</th>
+                            <th>Обоснование</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Максимальный размер файла CSV</td>
+                            <td>10 MB</td>
+                            <td>Производительность</td>
+                        </tr>
+                        <tr>
+                            <td>Максимальная длина фамилии</td>
+                            <td>100 символов</td>
+                            <td>Структура базы данных</td>
+                        </tr>
+                        <tr>
+                            <td>Максимальная длина клички</td>
+                            <td>100 символов</td>
+                            <td>Структура базы данных</td>
+                        </tr>
+                        <tr>
+                            <td>Максимальное количество врачей</td>
+                            <td>Не ограничено</td>
+                            <td>Архитектурное решение</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h4>4.4.2. Бизнес-правила</h4>
+                <ul>
+                    <li><strong>Правило уникальности:</strong> Не допускается дублирование идентичных записей анализов</li>
+                    <li><strong>Правило статуса:</strong> Анализ может быть либо "актуальным", либо "обработанным"</li>
+                    <li><strong>Правило ответственности:</strong> За каждым анализом закреплен конкретный врач</li>
+                    <li><strong>Правило аудита:</strong> Все изменения фиксируются в системных логах</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SECTION 5 -->
+        <section id="section5" class="content-section">
+            <h2>БАЗА ДАННЫХ</h2>
+            
+            <div class="section-content">
+                <h3>5.1. СТРУКТУРА БАЗЫ ДАННЫХ</h3>
+                
+                <h4>5.1.1. Таблица: doctors</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Поле</th>
+                            <th>Тип данных</th>
+                            <th>Ограничения</th>
+                            <th>Описание</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>id</td>
+                            <td>INTEGER</td>
+                            <td>PRIMARY KEY AUTOINCREMENT</td>
+                            <td>Уникальный идентификатор</td>
+                        </tr>
+                        <tr>
+                            <td>name</td>
+                            <td>VARCHAR(100)</td>
+                            <td>NOT NULL UNIQUE</td>
+                            <td>ФИО врача</td>
+                        </tr>
+                        <tr>
+                            <td>created_at</td>
+                            <td>DATETIME</td>
+                            <td>DEFAULT CURRENT_TIMESTAMP</td>
+                            <td>Дата создания записи</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h4>5.1.2. Таблица: analyses</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Поле</th>
+                            <th>Тип данных</th>
+                            <th>Ограничения</th>
+                            <th>Описание</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>id</td>
+                            <td>INTEGER</td>
+                            <td>PRIMARY KEY AUTOINCREMENT</td>
+                            <td>Уникальный идентификатор</td>
+                        </tr>
+                        <tr>
+                            <td>client_surname</td>
+                            <td>VARCHAR(100)</td>
+                            <td>NOT NULL</td>
+                            <td>Фамилия владельца животного</td>
+                        </tr>
+                        <tr>
+                            <td>pet_name</td>
+                            <td>VARCHAR(100)</td>
+                            <td>NOT NULL</td>
+                            <td>Кличка животного</td>
+                        </tr>
+                        <tr>
+                            <td>analysis_type</td>
+                            <td>VARCHAR(50)</td>
+                            <td>NOT NULL</td>
+                            <td>Тип анализа</td>
+                        </tr>
+                        <tr>
+                            <td>status</td>
+                            <td>VARCHAR(20)</td>
+                            <td>DEFAULT 'actual'</td>
+                            <td>Статус обработки</td>
+                        </tr>
+                        <tr>
+                            <td>is_called</td>
+                            <td>BOOLEAN</td>
+                            <td>DEFAULT 0</td>
+                            <td>Флаг совершенного звонка</td>
+                        </tr>
+                        <tr>
+                            <td>call_date</td>
+                            <td>DATETIME</td>
+                            <td>NULL</td>
+                            <td>Дата и время звонка</td>
+                        </tr>
+                        <tr>
+                            <td>created_at</td>
+                            <td>DATETIME</td>
+                            <td>DEFAULT CURRENT_TIMESTAMP</td>
+                            <td>Дата создания</td>
+                        </tr>
+                        <tr>
+                            <td>updated_at</td>
+                            <td>DATETIME</td>
+                            <td>DEFAULT CURRENT_TIMESTAMP</td>
+                            <td>Дата обновления</td>
+                        </tr>
+                        <tr>
+                            <td>doctor_id</td>
+                            <td>INTEGER</td>
+                            <td>FOREIGN KEY NOT NULL</td>
+                            <td>Ссылка на врача</td>
+                        </tr>
+                        <tr>
+                            <td>notes</td>
+                            <td>TEXT</td>
+                            <td>NULL</td>
+                            <td>Дополнительные заметки</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h3>5.2. СХЕМА ВЗАИМОСВЯЗЕЙ</h3>
+                <div class="architecture-diagram">
+                    <pre>    doctors                    analyses
+┌─────────────┐          ┌─────────────────┐
+│ id          │◄──┐      │ id              │
+│ name        │   └──────┤ doctor_id       │
+│ created_at  │          │ client_surname  │
+└─────────────┘          │ pet_name        │
+                         │ analysis_type   │
+                         │ status          │
+                         │ is_called       │
+                         │ call_date       │
+                         │ created_at      │
+                         │ updated_at      │
+                         │ notes           │
+                         └─────────────────┘</pre>
+                </div>
+                
+                <h3>5.3. ИНДЕКСЫ И ОПТИМИЗАЦИЯ</h3>
+                
+                <h4>5.3.1. Созданные индексы</h4>
+                <pre><code>-- Индекс для быстрого поиска по врачу
+CREATE INDEX idx_analyses_doctor_id ON analyses(doctor_id);
+
+-- Индекс для фильтрации по статусу
+CREATE INDEX idx_analyses_status ON analyses(status);
+
+-- Индекс для поиска по дате создания
+CREATE INDEX idx_analyses_created_at ON analyses(created_at);</code></pre>
+                
+                <h4>5.3.2. Рекомендуемые индексы</h4>
+                <pre><code>-- Для поиска по фамилии владельца
+CREATE INDEX idx_analyses_client_surname ON analyses(client_surname);
+
+-- Для поиска по кличке животного
+CREATE INDEX idx_analyses_pet_name ON analyses(pet_name);</code></pre>
+                
+                <h3>5.4. ПРОЦЕДУРЫ ОБСЛУЖИВАНИЯ</h3>
+                
+                <h4>5.4.1. Ежедневное обслуживание</h4>
+                <ul>
+                    <li><strong>Проверка целостности:</strong> <code>PRAGMA integrity_check;</code></li>
+                    <li><strong>Очистка временных данных:</strong> Удаление устаревших сессий</li>
+                    <li><strong>Оптимизация:</strong> <code>PRAGMA optimize;</code></li>
+                </ul>
+                
+                <h4>5.4.2. Еженедельное обслуживание</h4>
+                <ul>
+                    <li><strong>Резервное копирование:</strong> Экспорт всей базы данных</li>
+                    <li><strong>Анализ производительности:</strong> Проверка выполнения запросов</li>
+                    <li><strong>Очистка логов:</strong> Архивация старых лог-файлов</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- APPENDIX -->
+        <section id="appendix" class="content-section">
+            <h2>ПРИЛОЖЕНИЯ</h2>
+            
+            <div class="section-content">
+                <h3>ПРИЛОЖЕНИЕ A: ФОРМАТ CSV ФАЙЛА</h3>
+                
+                <h4>A.1. Требования к структуре</h4>
+                <pre><code>Врач,Фамилия,Кличка,Анализ,Примечания
+Волков И.Р.,Иванов,Барсик,Кровь,"Срочный анализ"
+Федосов М.А.,Петрова,Мурка,Моча,</code></pre>
+                
+                <h4>A.2. Правила валидации</h4>
+                <ul>
+                    <li><strong>Кодировка:</strong> UTF-8</li>
+                    <li><strong>Разделитель:</strong> Запятая (,)</li>
+                    <li><strong>Ограничитель текста:</strong> Двойные кавычки (")</li>
+                    <li><strong>Первая строка:</strong> Заголовки столбцов</li>
+                    <li><strong>Обязательные колонки:</strong> Врач, Фамилия, Кличка, Анализ</li>
+                </ul>
+                
+                <h3>ПРИЛОЖЕНИЕ B: КОДЫ ОШИБОК</h3>
+                
+                <h4>B.1. HTTP коды состояния</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Код</th>
+                            <th>Описание</th>
+                            <th>Действие пользователя</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>200</td>
+                            <td>Успешно</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td>400</td>
+                            <td>Неверный запрос</td>
+                            <td>Проверить введенные данные</td>
+                        </tr>
+                        <tr>
+                            <td>401</td>
+                            <td>Неавторизован</td>
+                            <td>Войти в систему</td>
+                        </tr>
+                        <tr>
+                            <td>403</td>
+                            <td>Запрещено</td>
+                            <td>Обратиться к администратору</td>
+                        </tr>
+                        <tr>
+                            <td>404</td>
+                            <td>Не найдено</td>
+                            <td>Проверить URL</td>
+                        </tr>
+                        <tr>
+                            <td>500</td>
+                            <td>Внутренняя ошибка</td>
+                            <td>Сообщить администратору</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h4>B.2. Системные коды ошибок</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Код</th>
+                            <th>Область</th>
+                            <th>Описание</th>
+                            <th>Решение</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>DB-001</td>
+                            <td>База данных</td>
+                            <td>Ошибка подключения</td>
+                            <td>Проверить доступность БД</td>
+                        </tr>
+                        <tr>
+                            <td>AUTH-001</td>
+                            <td>Аутентификация</td>
+                            <td>Неверные учетные данные</td>
+                            <td>Проверить логин/пароль</td>
+                        </tr>
+                        <tr>
+                            <td>CSV-001</td>
+                            <td>Импорт CSV</td>
+                            <td>Неверный формат файла</td>
+                            <td>Проверить структуру CSV</td>
+                        </tr>
+                        <tr>
+                            <td>VALID-001</td>
+                            <td>Валидация</td>
+                            <td>Не заполнены обязательные поля</td>
+                            <td>Заполнить все обязательные поля</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Document Footer -->
+        <div class="section-content success">
+            <h3>ИСТОРИЯ ИЗМЕНЕНИЙ</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Версия</th>
+                        <th>Дата</th>
+                        <th>Автор</th>
+                        <th>Изменения</th>
+                        <th>Статус</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1.2</td>
+                        <td id="history-date"></td>
+                        <td>Технический отдел</td>
+                        <td>Первоначальная версия</td>
+                        <td><span class="status-badge status-active">ДЕЙСТВУЮЩИЙ</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="note" style="margin-top: 20px;">
+                <p><strong>Рассылка документа:</strong></p>
+                <ul>
+                    <li>Технический отдел</li>
+                    <li>Отдел эксплуатации</li>
+                    <li>Административный персонал</li>
+                    <li>Архив документации</li>
+                </ul>
+                <p style="margin-top: 10px;"><strong>Электронная копия документа хранится по адресу:</strong><br>
+                <code>\\server\documentation\MVA\technical\</code></p>
+                <p><strong>Актуальная версия документа всегда доступна по ссылке:</strong><br>
+                <code>https://feirlymoore.github.io/Malvin-Vet-System/</code></p>
+            </div>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border); text-align: center;">
+                <p><strong>КОНЕЦ ДОКУМЕНТА</strong></p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Malvin Vet Analytics</h4>
+                    <p>Полная техническая документация системы управления анализами ветеринарной клиники.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Технические ресурсы</h4>
+                    <a href="index.html">Руководство пользователя</a>
+                    <a href="#">API Документация</a>
+                    <a href="#">Репозиторий GitHub</a>
+                    <a href="#">Чат поддержки</a>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Контакты</h4>
+                    <p>Разработчик: Feirly Moore</p>
+                    <p>GitHub: @FeirlyMoore</p>
+                    <p>Версия документации: 1.0</p>
+                    <p>Лицензия: MIT</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>© 2025 Malvin Vet Analytics. Техническая документация v1.0</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Set current date
+        const currentDate = new Date();
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('current-date').textContent = currentDate.toLocaleDateString('ru-RU', options);
+        document.getElementById('history-date').textContent = currentDate.toLocaleDateString('ru-RU', options);
+        
+        // Simple navigation highlighting
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('.nav-links a');
+            
+            let currentSectionId = '';
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 90;
+                const sectionHeight = section.clientHeight;
+                
+                if (window.scrollY >= sectionTop && window.scrollY < sectionTop + sectionHeight) {
+                    currentSectionId = '#' + section.id;
+                }
+            });
+            
+            // If at the top, make the first link active
+            if (window.scrollY < 100) {
+                navLinks.forEach(link => link.classList.remove('active'));
+                document.querySelector('.nav-links a[href="#"]').classList.add('active');
+            }
+        });
+        
+        // Smooth scrolling for TOC links
+        document.querySelectorAll('.toc a').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 70,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+        
+        // Add print button functionality
+        const printButton = document.createElement('button');
+        printButton.innerHTML = '<i class="fas fa-print"></i> Печать документа';
+        printButton.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        `;
+        printButton.addEventListener('click', () => window.print());
+        document.body.appendChild(printButton);
+        
+        // Responsive adjustments for print button
+        window.addEventListener('resize', () => {
+            if (window.innerWidth <= 768) {
+                printButton.style.bottom = '10px';
+                printButton.style.right = '10px';
+                printButton.style.padding = '8px 12px';
+                printButton.style.fontSize = '0.9rem';
+            } else {
+                printButton.style.bottom = '20px';
+                printButton.style.right = '20px';
+                printButton.style.padding = '10px 15px';
+                printButton.style.fontSize = '1rem';
+            }
+        });
+    </script>
+</body>
+</html>
