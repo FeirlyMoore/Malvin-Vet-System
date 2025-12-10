@@ -1,11 +1,11 @@
-# app.py - полная исправленная версия с фильтром по дате
+# app.py - полная исправленная версия с фильтром по дате, новой логикой загрузки CSV и архивацией
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import pandas as pd
 import os
 import csv
-from io import StringIO
+from io import StringIO, BytesIO
 from functools import wraps
 import traceback
 
@@ -31,6 +31,7 @@ class Doctor(db.Model):
 
 class Analysis(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    patient_id = db.Column(db.String(50))  # Новое поле: ID пациента
     client_surname = db.Column(db.String(100), nullable=False)
     pet_name = db.Column(db.String(100), nullable=False)
     analysis_type = db.Column(db.String(50), nullable=False)
@@ -53,13 +54,13 @@ with app.app_context():
         initial_doctors = [
             'Волков И.Р.',
             'Федосов М.А.', 
-            'Шашурина Ю.Н',
+            'Шашурина Ю.Н.',
             'Олейник А.С.',
             'Синюков С.С.',
-            'Соколова А.С',
+            'Соколова А.С.',
             'Гришина А.С.',
             'Соловьев Д.Е.',
-            'Титова Н.И',
+            'Соловьева Н.И.',
             'Лочехина Е.А.',
             'Зюков И.И.',
             'Синюкова Е.В.',
@@ -118,16 +119,39 @@ def index():
         # Получаем фильтры
         doctor_id = request.args.get('doctor_id', type=int)
         search = request.args.get('search', '').strip()
-        date_filter = request.args.get('date', '').strip()  # Фильтр по дате
+        date_filter = request.args.get('date', '').strip()
         
-        # Базовый запрос для ВСЕХ анализов (и актуальных, и обработанных)
-        query = Analysis.query
+        # Рассчитываем дату недельной давности для архива
+        week_ago = datetime.utcnow() - timedelta(days=7)
         
-        # Применяем фильтры врача
+        # Базовый запрос для НЕАРХИВНЫХ анализов (актуальные + свежие обработанные)
+        query = Analysis.query.filter(
+            db.or_(
+                Analysis.status == 'actual',
+                db.and_(
+                    Analysis.status == 'processed',
+                    Analysis.call_date >= week_ago
+                )
+            )
+        )
+        
+        # Отдельный запрос для АРХИВНЫХ анализов (обработанные старше 7 дней)
+        archive_query = Analysis.query.filter(
+            db.and_(
+                Analysis.status == 'processed',
+                Analysis.call_date < week_ago
+            )
+        )
+        
+        # Применяем фильтры врача к основному запросу
         if doctor_id:
             query = query.filter_by(doctor_id=doctor_id)
         
-        # Применяем поиск по тексту
+        # Применяем фильтры врача к архивному запросу
+        if doctor_id:
+            archive_query = archive_query.filter_by(doctor_id=doctor_id)
+        
+        # Применяем поиск по тексту к основному запросу
         if search:
             search_term = f"%{search}%"
             query = query.filter(
@@ -135,55 +159,81 @@ def index():
                     Analysis.client_surname.ilike(search_term),
                     Analysis.pet_name.ilike(search_term),
                     Analysis.analysis_type.ilike(search_term),
-                    Analysis.notes.ilike(search_term)
+                    Analysis.notes.ilike(search_term),
+                    Analysis.patient_id.ilike(search_term)
                 )
             )
         
-        # Применяем фильтр по дате
+        # Применяем поиск по тексту к архивному запросу
+        if search:
+            search_term = f"%{search}%"
+            archive_query = archive_query.filter(
+                db.or_(
+                    Analysis.client_surname.ilike(search_term),
+                    Analysis.pet_name.ilike(search_term),
+                    Analysis.analysis_type.ilike(search_term),
+                    Analysis.notes.ilike(search_term),
+                    Analysis.patient_id.ilike(search_term)
+                )
+            )
+        
+        # Применяем фильтр по дате создания к основному запросу
         if date_filter:
             try:
-                # Пытаемся распарсить дату в формате ДД.ММ.ГГГГ
                 date_obj = datetime.strptime(date_filter, '%d.%m.%Y').date()
-                
-                # Ищем анализы по дате создания
-                # Используем date() для сравнения только дат (без времени)
                 query = query.filter(db.func.date(Analysis.created_at) == date_obj)
             except ValueError:
-                # Если дата в неправильном формате, игнорируем фильтр
                 flash(f'Неверный формат даты: {date_filter}. Используйте ДД.ММ.ГГГГ', 'warning')
         
-        # Получаем ВСЕ анализы согласно фильтрам врача, поиска и даты
-        all_analyses = query.order_by(Analysis.created_at.desc()).all()
+        # Применяем фильтр по дате создания к архивному запросу
+        if date_filter:
+            try:
+                date_obj = datetime.strptime(date_filter, '%d.%m.%Y').date()
+                archive_query = archive_query.filter(db.func.date(Analysis.created_at) == date_obj)
+            except ValueError:
+                # Игнорируем, так как уже было предупреждение
+                pass
         
-        # Разделяем на актуальные и обработанные
-        # Актуальные - сортируем по дате создания (новые сверху)
-        actual_analyses = [a for a in all_analyses if a.status == 'actual']
+        # Получаем НЕАРХИВНЫЕ анализы согласно фильтрам
+        non_archived_analyses = query.order_by(Analysis.created_at.desc()).all()
+        
+        # Получаем АРХИВНЫЕ анализы согласно фильтрам
+        archived_analyses = archive_query.order_by(Analysis.call_date.desc()).all()
+        
+        # Разделяем неархивные на актуальные и свежие обработанные
+        actual_analyses = [a for a in non_archived_analyses if a.status == 'actual']
         actual_analyses.sort(key=lambda x: x.created_at, reverse=True)
         
-        # Обработанные - сортируем по дате обработки (новые сверху)
-        processed_analyses = [a for a in all_analyses if a.status == 'processed']
+        # Свежие обработанные (менее 7 дней) - сортируем по дате обработки
+        processed_analyses = [a for a in non_archived_analyses if a.status == 'processed']
         processed_analyses.sort(key=lambda x: x.call_date or datetime.min, reverse=True)
         
+        # Архивные - сортируем по дате обработки
+        archived_analyses.sort(key=lambda x: x.call_date or datetime.min, reverse=True)
+        
         # Для обратной совместимости
-        analyses = all_analyses
+        analyses = non_archived_analyses
         
         # Получаем всех врачей для фильтра
         doctors = Doctor.query.order_by(Doctor.name).all()
         
-        # Статистика (общая, без фильтров)
-        total_analyses = Analysis.query.count()
-        actual_count = Analysis.query.filter_by(status='actual').count()
-        processed_count = Analysis.query.filter_by(status='processed').count()
+        # Статистика (только по НЕАРХИВНЫМ анализам)
+        total_non_archived = len(non_archived_analyses)
+        actual_count = len(actual_analyses)
+        processed_fresh_count = len(processed_analyses)
+        archived_count = len(archived_analyses)
         
-        # Статистика по врачам (общая, без фильтров)
+        # Статистика по врачам (только по неархивным)
         doctor_stats = []
         for doctor in doctors:
-            doctor_actual = Analysis.query.filter_by(doctor_id=doctor.id, status='actual').count()
-            doctor_processed = Analysis.query.filter_by(doctor_id=doctor.id, status='processed').count()
-            doctor_total = doctor_actual + doctor_processed
+            # Актуальные
+            doctor_actual = len([a for a in actual_analyses if a.doctor_id == doctor.id])
+            # Свежие обработанные
+            doctor_processed_fresh = len([a for a in processed_analyses if a.doctor_id == doctor.id])
+            doctor_total = doctor_actual + doctor_processed_fresh
             
             if doctor_total > 0:
-                progress = int((doctor_processed / doctor_total) * 100)
+                progress = int((doctor_processed_fresh / doctor_total) * 100)
             else:
                 progress = 0
                 
@@ -191,7 +241,7 @@ def index():
                 'id': doctor.id,
                 'name': doctor.name,
                 'actual': doctor_actual,
-                'processed': doctor_processed,
+                'processed': doctor_processed_fresh,
                 'total': doctor_total,
                 'progress': progress
             })
@@ -201,25 +251,41 @@ def index():
         return render_template('index.html',
                              analyses=analyses,
                              actual_analyses=actual_analyses,      # Только актуальные
-                             processed_analyses=processed_analyses, # Только обработанные
+                             processed_analyses=processed_analyses, # Свежие обработанные (<7 дней)
+                             archived_analyses=archived_analyses,   # Архивные (>7 дней)
                              doctors=doctors,
                              doctor_stats=doctor_stats,
-                             total_analyses=total_analyses,
+                             total_analyses=total_non_archived,    # Только неархивные
                              actual_count=actual_count,
-                             processed_count=processed_count,
+                             processed_count=processed_fresh_count, # Только свежие обработанные
+                             archived_count=archived_count,         # Количество архивных
                              selected_doctor=doctor_id,
                              search_query=search,
-                             date_filter=date_filter,  # Передаем фильтр даты в шаблон
+                             date_filter=date_filter,
+                             week_ago=week_ago,
                              now=now)
     
     except Exception as e:
         flash(f'Ошибка при загрузке данных: {str(e)}', 'danger')
+        print(f"Ошибка в функции index: {str(e)}")
+        traceback.print_exc()
+        
+        # Возвращаем значения по умолчанию при ошибке
         return render_template('index.html', 
                               analyses=[], 
                               actual_analyses=[], 
                               processed_analyses=[], 
+                              archived_analyses=[],
                               doctors=[], 
-                              doctor_stats=[])
+                              doctor_stats=[],
+                              total_analyses=0,
+                              actual_count=0,
+                              processed_count=0,
+                              archived_count=0,
+                              selected_doctor=None,
+                              search_query='',
+                              date_filter='',
+                              now=datetime.now())
 
 def log_emergency_call(analysis):
     """Создает лог-файл с информацией о звонке"""
@@ -234,6 +300,7 @@ def log_emergency_call(analysis):
 КЛИЧКА: {analysis.pet_name}
 АНАЛИЗ: {analysis.analysis_type}
 ВРАЧ: {analysis.doctor.name if analysis.doctor else 'Не указан'}
+ID ПАЦИЕНТА: {analysis.patient_id or 'Не указан'}
 СТАТУС: Обработан
 {'='*60}
 """
@@ -287,11 +354,14 @@ def add_analysis():
     
     if request.method == 'POST':
         try:
+            patient_id = request.form.get('patient_id', '').strip()
             client_surname = request.form.get('client_surname', '').strip()
             pet_name = request.form.get('pet_name', '').strip()
             analysis_type = request.form.get('analysis_type', '').strip()
             doctor_id = request.form.get('doctor_id', type=int)
             notes = request.form.get('notes', '').strip()
+            custom_date = request.form.get('custom_date', '').strip()
+            custom_time = request.form.get('custom_time', '').strip()
             
             if not client_surname or not pet_name or not analysis_type:
                 flash('Заполните обязательные поля: Фамилия, Кличка, Тип анализа', 'danger')
@@ -303,8 +373,47 @@ def add_analysis():
                 flash('Выберите врача', 'danger')
                 return render_template('add_analysis.html', doctors=doctors)
             
+            # Обрабатываем дату и время
+            created_at = datetime.utcnow()
+            if custom_date:
+                try:
+                    if custom_time:
+                        datetime_str = f"{custom_date} {custom_time}"
+                        created_at = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M')
+                    else:
+                        date_obj = datetime.strptime(custom_date, '%Y-%m-%d')
+                        created_at = datetime.combine(date_obj, datetime.now().time())
+                except ValueError:
+                    flash('Неверный формат даты или времени', 'danger')
+                    return render_template('add_analysis.html', doctors=doctors)
+            
+            # Проверяем на дубликат среди всех анализов
+            check_date = created_at.date()
+            existing_analyses = Analysis.query.filter(
+                db.and_(
+                    Analysis.client_surname == client_surname,
+                    Analysis.pet_name == pet_name,
+                    Analysis.analysis_type == analysis_type,
+                    Analysis.doctor_id == doctor.id,
+                    db.func.date(Analysis.created_at) == check_date
+                )
+            ).all()
+            
+            # Проверяем, есть ли точный дубликат
+            is_duplicate = False
+            for existing_analysis in existing_analyses:
+                if (existing_analysis.patient_id == patient_id and
+                    existing_analysis.notes == notes):
+                    is_duplicate = True
+                    break
+            
+            if is_duplicate:
+                flash('Анализ с такими данными уже существует в системе', 'warning')
+                return render_template('add_analysis.html', doctors=doctors)
+            
             # Создаем анализ
             new_analysis = Analysis(
+                patient_id=patient_id if patient_id else None,
                 client_surname=client_surname,
                 pet_name=pet_name,
                 analysis_type=analysis_type,
@@ -312,7 +421,7 @@ def add_analysis():
                 notes=notes,
                 status='actual',
                 is_called=False,
-                created_at=datetime.utcnow()
+                created_at=created_at
             )
             
             db.session.add(new_analysis)
@@ -346,6 +455,7 @@ def edit_analysis(analysis_id):
     
     if request.method == 'POST':
         try:
+            analysis.patient_id = request.form.get('patient_id', '').strip()
             analysis.client_surname = request.form.get('client_surname', '').strip()
             analysis.pet_name = request.form.get('pet_name', '').strip()
             analysis.analysis_type = request.form.get('analysis_type', '').strip()
@@ -401,7 +511,65 @@ def delete_analysis(analysis_id):
                           date=date_filter if date_filter else None)
     return redirect(redirect_url)
 
-# ЗАГРУЗКА CSV - ИСПРАВЛЕННАЯ ВЕРСИЯ
+# Принудительное перемещение анализа в архив
+@app.route('/analysis/<int:analysis_id>/archive', methods=['POST'])
+@login_required
+def archive_analysis(analysis_id):
+    try:
+        analysis = Analysis.query.get_or_404(analysis_id)
+        
+        if analysis.status == 'processed' and analysis.call_date:
+            # Устанавливаем старую дату обработки (имитируем архив)
+            analysis.call_date = analysis.call_date - timedelta(days=8)
+            db.session.commit()
+            flash(f'Анализ для {analysis.client_surname} перемещен в архив', 'success')
+        else:
+            flash('Только обработанные анализы можно перемещать в архив', 'warning')
+    
+    except Exception as e:
+        flash(f'Ошибка при перемещении в архив: {str(e)}', 'danger')
+    
+    # Сохраняем фильтры
+    doctor_id = request.form.get('redirect_doctor_id', '')
+    search = request.form.get('redirect_search', '')
+    date_filter = request.form.get('redirect_date', '')
+    
+    redirect_url = url_for('index',
+                          doctor_id=doctor_id if doctor_id else None,
+                          search=search if search else None,
+                          date=date_filter if date_filter else None)
+    return redirect(redirect_url)
+
+# Массовое архивирование старых записей
+@app.route('/archive_old', methods=['POST'])
+@login_required
+def archive_old():
+    try:
+        week_ago = datetime.utcnow() - timedelta(days=7)
+        
+        # Находим свежие обработанные анализы (меньше 7 дней)
+        fresh_analyses = Analysis.query.filter(
+            db.and_(
+                Analysis.status == 'processed',
+                Analysis.call_date >= week_ago
+            )
+        ).all()
+        
+        count = 0
+        for analysis in fresh_analyses:
+            # Устанавливаем старую дату (имитация архива)
+            analysis.call_date = analysis.call_date - timedelta(days=8)
+            count += 1
+        
+        db.session.commit()
+        flash(f'В архив перемещено {count} анализов', 'success')
+    
+    except Exception as e:
+        flash(f'Ошибка при архивировании: {str(e)}', 'danger')
+    
+    return redirect(url_for('index'))
+
+# ЗАГРУЗКА CSV - ОБНОВЛЕННАЯ ВЕРСИЯ С ID ПАЦИЕНТА И ВРЕМЕНЕМ
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
 def upload_csv():
@@ -484,16 +652,29 @@ def upload_csv():
             # Нормализуем названия колонок
             fieldnames = [col.strip() for col in csv_reader.fieldnames]
             
-            # Проверяем обязательные колонки
+            # Проверяем обязательные колонки (старые)
             required_columns = ['Врач', 'Фамилия', 'Кличка', 'Анализ']
-            missing_columns = []
             
+            # Новые необязательные колонки
+            optional_columns = ['ID пациента', 'Время создания']
+            
+            # Все возможные колонки
+            all_columns = required_columns + optional_columns
+            
+            # Ищем колонки в файле (разные варианты написания)
+            found_columns = {}
+            for col in all_columns:
+                col_variants = [col, col.lower(), col.upper()]
+                for variant in col_variants:
+                    if variant in fieldnames:
+                        found_columns[col] = variant
+                        break
+            
+            # Проверяем обязательные колонки
+            missing_columns = []
             for col in required_columns:
-                if col not in fieldnames:
-                    # Проверяем различные варианты написания
-                    col_variants = [col, col.lower(), col.upper()]
-                    if not any(var in fieldnames for var in col_variants):
-                        missing_columns.append(col)
+                if col not in found_columns:
+                    missing_columns.append(col)
             
             if missing_columns:
                 flash(f'Отсутствуют обязательные колонки: {", ".join(missing_columns)}', 'danger')
@@ -502,43 +683,83 @@ def upload_csv():
             
             # Обрабатываем данные
             added_count = 0
-            skipped_count = 0
+            skipped_duplicates = 0
+            skipped_empty = 0
             error_count = 0
+            
+            # Получаем текущую дату и время для использования по умолчанию
+            current_datetime = datetime.utcnow()
             
             for row_num, row in enumerate(csv_reader, start=2):  # start=2 (заголовки - строка 1)
                 try:
-                    # Получаем данные из строки
-                    # Используем различные варианты названий колонок
+                    # Получаем данные из строки с учетом разных вариантов названий колонок
                     doctor_name = ''
                     client_surname = ''
                     pet_name = ''
                     analysis_type = ''
+                    patient_id = ''
+                    creation_time = None
                     
                     # Ищем данные в разных вариантах колонок
-                    for col_name in ['Врач', 'ВРАЧ', 'врач']:
-                        if col_name in row and row[col_name]:
-                            doctor_name = str(row[col_name]).strip()
-                            break
+                    # Врач
+                    if 'Врач' in found_columns:
+                        doctor_name = str(row[found_columns['Врач']]).strip() if row.get(found_columns['Врач']) else ''
                     
-                    for col_name in ['Фамилия', 'ФАМИЛИЯ', 'фамилия']:
-                        if col_name in row and row[col_name]:
-                            client_surname = str(row[col_name]).strip()
-                            break
+                    # Фамилия
+                    if 'Фамилия' in found_columns:
+                        client_surname = str(row[found_columns['Фамилия']]).strip() if row.get(found_columns['Фамилия']) else ''
                     
-                    for col_name in ['Кличка', 'КЛИЧКА', 'кличка']:
-                        if col_name in row and row[col_name]:
-                            pet_name = str(row[col_name]).strip()
-                            break
+                    # Кличка
+                    if 'Кличка' in found_columns:
+                        pet_name = str(row[found_columns['Кличка']]).strip() if row.get(found_columns['Кличка']) else ''
                     
-                    for col_name in ['Анализ', 'АНАЛИЗ', 'анализ']:
-                        if col_name in row and row[col_name]:
-                            analysis_type = str(row[col_name]).strip()
-                            break
+                    # Анализ
+                    if 'Анализ' in found_columns:
+                        analysis_type = str(row[found_columns['Анализ']]).strip() if row.get(found_columns['Анализ']) else ''
                     
-                    # Проверяем, что все поля заполнены
+                    # ID пациента (необязательное поле)
+                    if 'ID пациента' in found_columns and found_columns['ID пациента'] in row:
+                        patient_id = str(row[found_columns['ID пациента']]).strip()
+                    
+                    # Время создания (необязательное поле)
+                    if 'Время создания' in found_columns and found_columns['Время создания'] in row:
+                        time_str = str(row[found_columns['Время создания']]).strip()
+                        if time_str:
+                            try:
+                                # Пробуем разные форматы времени
+                                formats = [
+                                    '%d.%m.%Y %H:%M',    # 25.03.2024 14:30
+                                    '%Y-%m-%d %H:%M:%S', # 2024-03-25 14:30:00
+                                    '%d/%m/%Y %H:%M',    # 25/03/2024 14:30
+                                    '%H:%M %d.%m.%Y',    # 14:30 25.03.2024
+                                    '%d.%m.%Y',          # 25.03.2024 (только дата)
+                                    '%Y-%m-%d %H:%M',    # 2024-03-25 14:30
+                                    '%d.%m.%Y %H:%M:%S', # 25.03.2024 14:30:00
+                                ]
+                                
+                                for fmt in formats:
+                                    try:
+                                        creation_time = datetime.strptime(time_str, fmt)
+                                        break
+                                    except ValueError:
+                                        continue
+                                
+                                # Если не распарсилось, используем текущее время
+                                if not creation_time:
+                                    creation_time = current_datetime
+                                    print(f"Строка {row_num}: не удалось распарсить время '{time_str}', используется текущее время")
+                            except Exception as e:
+                                print(f"Строка {row_num}: ошибка при парсинге времени: {e}")
+                                creation_time = current_datetime
+                    
+                    # Если время не указано, используем текущее
+                    if not creation_time:
+                        creation_time = current_datetime
+                    
+                    # Проверяем, что все обязательные поля заполнены
                     if not doctor_name or not client_surname or not pet_name or not analysis_type:
-                        print(f"Строка {row_num}: пропущена - не все поля заполнены")
-                        skipped_count += 1
+                        print(f"Строка {row_num}: пропущена - не все обязательные поля заполнены")
+                        skipped_empty += 1
                         continue
                     
                     # Находим или создаем врача
@@ -546,32 +767,51 @@ def upload_csv():
                     if not doctor:
                         doctor = Doctor(name=doctor_name)
                         db.session.add(doctor)
-                        db.session.flush()
+                        db.session.flush()  # Получаем ID без коммита
                     
-                    # Проверяем на дубликат
-                    existing_analysis = Analysis.query.filter_by(
-                        client_surname=client_surname,
-                        pet_name=pet_name,
-                        analysis_type=analysis_type,
-                        doctor_id=doctor.id,
-                        status='actual'
-                    ).first()
+                    # Подготавливаем данные для проверки дубликатов
+                    check_date = creation_time.date()  # Только дата для проверки дубликатов
                     
-                    if existing_analysis:
-                        print(f"Строка {row_num}: пропущена - дубликат")
-                        skipped_count += 1
+                    # Проверяем на дубликаты среди ВСЕХ анализов (и актуальных, и обработанных)
+                    existing_analyses = Analysis.query.filter(
+                        db.and_(
+                            Analysis.client_surname == client_surname,
+                            Analysis.pet_name == pet_name,
+                            Analysis.analysis_type == analysis_type,
+                            Analysis.doctor_id == doctor.id,
+                            db.func.date(Analysis.created_at) == check_date
+                        )
+                    ).all()
+                    
+                    # Получаем примечания
+                    notes = str(row.get('Примечания', '')).strip()
+                    
+                    # Проверяем, есть ли точный дубликат (все поля совпадают)
+                    is_duplicate = False
+                    for existing_analysis in existing_analyses:
+                        # Сравниваем все поля
+                        if (existing_analysis.patient_id == patient_id and
+                            existing_analysis.notes == notes):
+                            is_duplicate = True
+                            break
+                    
+                    if is_duplicate:
+                        print(f"Строка {row_num}: пропущена - точный дубликат найден")
+                        skipped_duplicates += 1
                         continue
                     
                     # Создаем новый анализ
                     new_analysis = Analysis(
+                        patient_id=patient_id if patient_id else None,
                         client_surname=client_surname,
                         pet_name=pet_name,
                         analysis_type=analysis_type,
                         doctor_id=doctor.id,
-                        notes=str(row.get('Примечания', '')).strip(),
+                        notes=notes,
                         status='actual',
                         is_called=False,
-                        created_at=datetime.utcnow()
+                        created_at=creation_time,
+                        updated_at=creation_time
                     )
                     
                     db.session.add(new_analysis)
@@ -584,6 +824,8 @@ def upload_csv():
                     
                 except Exception as e:
                     print(f"Ошибка в строке {row_num}: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
                     error_count += 1
                     continue
             
@@ -593,15 +835,19 @@ def upload_csv():
             # Формируем сообщение об успехе
             if added_count > 0:
                 message = f"✅ Успешно добавлено {added_count} анализов"
-                if skipped_count > 0:
-                    message += f", пропущено {skipped_count} (пустые/дубликаты)"
+                if skipped_duplicates > 0:
+                    message += f", пропущено {skipped_duplicates} дубликатов"
+                if skipped_empty > 0:
+                    message += f", пропущено {skipped_empty} строк с пустыми полями"
                 if error_count > 0:
                     message += f", ошибок: {error_count}"
                 flash(message, 'success')
             else:
                 message = "⚠️ Не удалось добавить анализы"
-                if skipped_count > 0:
-                    message += f". Пропущено {skipped_count} строк"
+                if skipped_duplicates > 0:
+                    message += f". Пропущено {skipped_duplicates} дубликатов"
+                if skipped_empty > 0:
+                    message += f". Пропущено {skipped_empty} строк с пустыми полями"
                 if error_count > 0:
                     message += f". Ошибок: {error_count}"
                 flash(message, 'warning')
@@ -614,7 +860,6 @@ def upload_csv():
             traceback.print_exc()
             return redirect(url_for('upload_csv'))
     
-    # Если метод не GET и не POST
     return redirect(url_for('upload_csv'))
 
 # Просмотр логов
@@ -660,7 +905,7 @@ def export_data():
         
         # Заголовки
         writer.writerow([
-            'ID', 'Фамилия владельца', 'Кличка', 'Тип анализа',
+            'ID', 'ID пациента', 'Фамилия владельца', 'Кличка', 'Тип анализа',
             'Статус', 'Обработан', 'Дата обработки', 'Врач',
             'Примечания', 'Дата создания', 'Дата обновления'
         ])
@@ -669,6 +914,7 @@ def export_data():
         for analysis in analyses:
             writer.writerow([
                 analysis.id,
+                analysis.patient_id or '',
                 analysis.client_surname,
                 analysis.pet_name,
                 analysis.analysis_type,
@@ -685,7 +931,7 @@ def export_data():
         
         # Возвращаем файл
         return send_file(
-            StringIO(output.getvalue()),
+            BytesIO(output.getvalue().encode('utf-8')),
             mimetype='text/csv',
             as_attachment=True,
             download_name=f'analytics_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
@@ -802,13 +1048,13 @@ def reset_database():
         initial_doctors = [
             'Волков И.Р.',
             'Федосов М.А.', 
-            'Шашурина Ю.Н',
+            'Шашурина Ю.Н.',
             'Олейник А.С.',
             'Синюков С.С.',
-            'Соколова А.С',
+            'Соколова А.С.',
             'Гришина А.С.',
             'Соловьев Д.Е.',
-            'Титова Н.И',
+            'Соловьева Н.И.',
             'Лочехина Е.А.',
             'Зюков И.И.',
             'Синюкова Е.В.',

@@ -202,8 +202,6 @@
                     
                     <!-- Форма -->
                     <form method="POST" action="{{ url_for('upload_csv') }}" enctype="multipart/form-data" id="uploadForm">
-                        <input type="hidden" id="selectedFile" name="csv_file">
-
                         <!-- Область загрузки файла -->
                         <div class="file-drop-area mb-4" id="fileDropArea">
                             <div class="file-drop-icon">
@@ -287,10 +285,9 @@
                         <div class="col-md-6">
                             <h6 class="mb-3">Дополнительные колонки:</h6>
                             <ul class="instructions-list">
+                                <li><strong>ID пациента</strong> - Уникальный идентификатор пациента (необязательно)</li>
+                                <li><strong>Время создания</strong> - Дата и время создания анализа в формате ДД.ММ.ГГГГ ЧЧ:ММ (необязательно)</li>
                                 <li><strong>Примечания</strong> - Дополнительная информация</li>
-                                <li>Колонки могут быть в любом порядке</li>
-                                <li>Разделитель - запятая</li>
-                                <li>Кодировка - UTF-8</li>
                             </ul>
                         </div>
                     </div>
@@ -301,13 +298,30 @@
                                 <i class="bi bi-lightbulb"></i>
                             </div>
                             <div>
-                                <h6 class="alert-heading mb-2">Советы:</h6>
+                                <h6 class="alert-heading mb-2">Важная информация:</h6>
                                 <ul class="mb-0">
-                                    <li>Файл можно создать в Excel и сохранить как CSV</li>
-                                    <li>Убедитесь, что в файле нет пустых строк в начале</li>
-                                    <li>Если врач не существует в системе, он будет создан автоматически</li>
-                                    <li>Все анализы загружаются со статусом "Актуальный"</li>
+                                    <li><strong>Дубликаты:</strong> Система проверяет дубликаты среди всех анализов (и актуальных, и проработанных)</li>
+                                    <li><strong>Проверка:</strong> Сравниваются: фамилия, кличка, тип анализа, врач, дата (без времени), ID пациента и примечания</li>
+                                    <li><strong>Время:</strong> Если время не указано, используется текущее время загрузки</li>
+                                    <li><strong>Врачи:</strong> Если врач не существует в системе, он будет создан автоматически</li>
+                                    <li><strong>Статус:</strong> Все анализы загружаются со статусом "Актуальный"</li>
                                 </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning mt-3">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="bi bi-exclamation-triangle"></i>
+                            </div>
+                            <div>
+                                <h6 class="alert-heading mb-2">Обратите внимание:</h6>
+                                <p class="mb-0">
+                                    Два анализа считаются дубликатами, если в один и тот же день у них совпадают все данные 
+                                    (фамилия, кличка, тип анализа, врач, ID пациента и примечания). 
+                                    Разное время создания в один день НЕ делает анализ уникальным, если все остальные данные совпадают.
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -330,6 +344,8 @@
                                     <th>Фамилия</th>
                                     <th>Кличка</th>
                                     <th>Анализ</th>
+                                    <th>ID пациента</th>
+                                    <th>Время создания</th>
                                     <th>Примечания</th>
                                 </tr>
                             </thead>
@@ -339,6 +355,8 @@
                                     <td>Смирнов</td>
                                     <td>Барсик</td>
                                     <td>Кровь</td>
+                                    <td>PAT-001</td>
+                                    <td>25.03.2024 14:30</td>
                                     <td></td>
                                 </tr>
                                 <tr>
@@ -346,6 +364,8 @@
                                     <td>Иванова</td>
                                     <td>Мурка</td>
                                     <td>Моча</td>
+                                    <td>PAT-002</td>
+                                    <td>25.03.2024 15:45</td>
                                     <td>Срочный анализ</td>
                                 </tr>
                                 <tr>
@@ -353,6 +373,8 @@
                                     <td>Петров</td>
                                     <td>Шарик</td>
                                     <td>Кал</td>
+                                    <td>PAT-003</td>
+                                    <td>26.03.2024 10:15</td>
                                     <td></td>
                                 </tr>
                                 <tr>
@@ -360,6 +382,8 @@
                                     <td>Сидорова</td>
                                     <td>Рекс</td>
                                     <td>Гистология</td>
+                                    <td>PAT-004</td>
+                                    <td>26.03.2024 11:20</td>
                                     <td>Повтор через месяц</td>
                                 </tr>
                                 <tr>
@@ -367,6 +391,8 @@
                                     <td>Кузнецов</td>
                                     <td>Пушистик</td>
                                     <td>Вет Юнион</td>
+                                    <td>PAT-005</td>
+                                    <td>27.03.2024 09:00</td>
                                     <td>Анализ из сторонней лаборатории</td>
                                 </tr>
                             </tbody>
@@ -385,7 +411,7 @@
     </div>
 
     <!-- Футер -->
-    <footer class="mt-5 py-4" style="background: linear-gradient(135deg, var(--malvin-blue) 0%, var(--malvin-light-blue) 100%);">
+    <footer class="mt-5 py-4" style="background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);">
         <div class="container-fluid">
             <div class="row align-items-center">
                 <div class="col-md-4">
@@ -404,11 +430,7 @@
                 </div>
                 <div class="col-md-4 text-md-end">
                     <small class="text-light opacity-75">
-                        Версия 1.2 | 
-                        <i class="bi bi-cpu ms-2 me-1"></i>Всего анализов: {{ total_analyses }}
-                        {% if selected_doctor or search_query or date_filter %}
-                        <br><i class="bi bi-funnel ms-2 me-1"></i>Фильтры применены
-                        {% endif %}
+                        Версия 1.2 | Поддержка ID пациента и времени создания
                     </small>
                 </div>
             </div>
@@ -428,7 +450,6 @@
         const fileSize = document.getElementById('fileSize');
         const uploadBtn = document.getElementById('uploadBtn');
         const fileError = document.getElementById('fileError');
-        const selectedFileInput = document.getElementById('selectedFile');
         
         // Обработка выбора файла
         fileInput.addEventListener('change', function(e) {
@@ -492,11 +513,6 @@
             
             // Активируем кнопку загрузки
             uploadBtn.disabled = false;
-            
-            // Сохраняем файл в скрытом поле
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            selectedFileInput.value = dataTransfer.files[0].name;
         }
         
         // Удаление файла
@@ -504,7 +520,6 @@
             fileInput.value = '';
             fileInfo.style.display = 'none';
             uploadBtn.disabled = true;
-            selectedFileInput.value = '';
         }
         
         // Форматирование размера файла
@@ -554,12 +569,12 @@
         
         // Скачать пример CSV файла
         function downloadExample() {
-            const csvContent = `Врач,Фамилия,Кличка,Анализ,Примечания
-Волков И.Р.,Смирнов,Барсик,Кровь,
-Федосов М.А.,Иванова,Мурка,Моча,Срочный анализ
-Шашурина Ю.Н,Петров,Шарик,Кал,
-Олейник А.С.,Сидорова,Рекс,Гистология,Повтор через месяц
-Синюков С.С.,Кузнецов,Пушистик,Вет Юнион,Анализ из сторонней лаборатории`;
+            const csvContent = `Врач,Фамилия,Кличка,Анализ,ID пациента,Время создания,Примечания
+Волков И.Р.,Смирнов,Барсик,Кровь,PAT-001,25.03.2024 14:30,
+Федосов М.А.,Иванова,Мурка,Моча,PAT-002,25.03.2024 15:45,Срочный анализ
+Шашурина Ю.Н,Петров,Шарик,Кал,PAT-003,26.03.2024 10:15,
+Олейник А.С.,Сидорова,Рекс,Гистология,PAT-004,26.03.2024 11:20,Повтор через месяц
+Синюков С.С.,Кузнецов,Пушистик,Вет Юнион,PAT-005,27.03.2024 09:00,Анализ из сторонней лаборатории`;
             
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
@@ -571,28 +586,6 @@
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
-        }
-        
-        // Показать уведомление
-        function showNotification(message, type = 'info') {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-            alertDiv.innerHTML = `
-                ${type === 'success' ? '<i class="bi bi-check-circle me-2"></i>' : 
-                  type === 'danger' ? '<i class="bi bi-exclamation-triangle me-2"></i>' : 
-                  '<i class="bi bi-info-circle me-2"></i>'}
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            
-            const container = document.querySelector('.card-body');
-            container.insertBefore(alertDiv, container.firstChild);
-            
-            // Автоматическое скрытие через 5 секунд
-            setTimeout(() => {
-                const bsAlert = new bootstrap.Alert(alertDiv);
-                bsAlert.close();
-            }, 5000);
         }
         
         // Автофокус на области загрузки
