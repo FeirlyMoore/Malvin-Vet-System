@@ -1,4 +1,245 @@
 <!DOCTYPE html>
+{% macro analysis_badge(analysis_type) %}
+    {% set analysis_colors = {
+        'Кровь': 'blood',
+        'Моча': 'urine', 
+        'Кал': 'feces',
+        'Цитология': 'cytology',
+        'Гистология': 'histology',
+        'Вет Юнион': 'vet-union',
+        'Дерматология': 'dermatology'
+    } %}
+    
+    {% if analysis_type in analysis_colors %}
+    <span class="badge badge-{{ analysis_colors[analysis_type] }} analysis-badge">
+        {{ analysis_type }}
+    </span>
+    {% else %}
+    <span class="badge badge-manual analysis-badge">
+        {{ analysis_type }}
+    </span>
+    {% endif %}
+{% endmacro %}
+
+{% macro analysis_row_actual(analysis) %}
+<tr class="align-middle">
+    <td>
+        <span class="badge bg-warning analysis-badge">
+            <i class="bi bi-clock me-1"></i>Ожидает
+        </span>
+    </td>
+    <td>
+        <strong>{{ analysis.doctor.name if analysis.doctor else 'Не указан' }}</strong>
+    </td>
+    <td>{{ analysis.client_surname }}</td>
+    <td>
+        <span class="badge bg-light text-dark border">
+            {{ analysis.pet_name }}
+        </span>
+    </td>
+    <td>
+        {{ analysis_badge(analysis.analysis_type) }}
+    </td>
+    <td>
+        {% if analysis.patient_id %}
+        <span class="badge patient-id-badge">
+            {{ analysis.patient_id }}
+        </span>
+        {% else %}
+        <span class="text-muted">—</span>
+        {% endif %}
+    </td>
+    <td>
+        <small class="text-muted">
+            {{ analysis.created_at.strftime('%d.%m.%Y %H:%M') }}
+        </small>
+    </td>
+    <td>
+        <div class="action-buttons-group">
+            <button type="button" class="btn btn-success" 
+                    title="Отметить звонок"
+                    data-bs-toggle="modal" 
+                    data-bs-target="#confirmCallModal"
+                    data-analysis-id="{{ analysis.id }}"
+                    data-client-surname="{{ analysis.client_surname }}"
+                    data-pet-name="{{ analysis.pet_name }}"
+                    data-analysis-type="{{ analysis.analysis_type }}"
+                    data-doctor-name="{{ analysis.doctor.name if analysis.doctor else 'Не указан' }}"
+                    data-patient-id="{{ analysis.patient_id or '' }}"
+                    data-created-at="{{ analysis.created_at.strftime('%d.%m.%Y %H:%M') }}">
+                <i class="bi bi-telephone"></i>
+            </button>
+            <a href="{{ url_for('edit_analysis', analysis_id=analysis.id) }}" 
+               class="btn btn-primary" title="Редактировать">
+                <i class="bi bi-pencil"></i>
+            </a>
+            <button type="button" class="btn btn-danger" 
+                    title="Удалить"
+                    data-bs-toggle="modal" 
+                    data-bs-target="#confirmDeleteModal"
+                    data-analysis-id="{{ analysis.id }}"
+                    data-client-surname="{{ analysis.client_surname }}"
+                    data-pet-name="{{ analysis.pet_name }}"
+                    data-analysis-type="{{ analysis.analysis_type }}"
+                    data-doctor-name="{{ analysis.doctor.name if analysis.doctor else 'Не указан' }}"
+                    data-patient-id="{{ analysis.patient_id or '' }}"
+                    data-created-at="{{ analysis.created_at.strftime('%d.%m.%Y %H:%M') }}"
+                    data-analysis-status="actual">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    </td>
+</tr>
+{% endmacro %}
+
+{% macro analysis_row_processed(analysis) %}
+<tr class="align-middle">
+    <td>
+        <span class="badge bg-success analysis-badge">
+            <i class="bi bi-check-circle me-1"></i>Обработан
+        </span>
+    </td>
+    <td>
+        <strong>{{ analysis.doctor.name if analysis.doctor else 'Не указан' }}</strong>
+    </td>
+    <td>{{ analysis.client_surname }}</td>
+    <td>
+        <span class="badge bg-light text-dark border">
+            {{ analysis.pet_name }}
+        </span>
+    </td>
+    <td>
+        {{ analysis_badge(analysis.analysis_type) }}
+    </td>
+    <td>
+        {% if analysis.patient_id %}
+        <span class="badge patient-id-badge">
+            {{ analysis.patient_id }}
+        </span>
+        {% else %}
+        <span class="text-muted">—</span>
+        {% endif %}
+    </td>
+    <td>
+        <small class="text-muted">
+            {{ analysis.created_at.strftime('%d.%m.%Y %H:%M') }}
+        </small>
+    </td>
+    <td>
+        {% if analysis.call_date %}
+        <small class="text-muted">
+            {{ analysis.call_date.strftime('%d.%m.%Y %H:%M') }}
+            {% if now and analysis.call_date %}
+            <br><small class="days-ago">(~{{ ((now - analysis.call_date).days) }} д. назад)</small>
+            {% endif %}
+        </small>
+        {% else %}
+        <span class="text-muted">—</span>
+        {% endif %}
+    </td>
+    <td>
+        <div class="action-buttons-group">
+            <a href="{{ url_for('edit_analysis', analysis_id=analysis.id) }}" 
+               class="btn btn-primary" title="Редактировать">
+                <i class="bi bi-pencil"></i>
+            </a>
+            <button type="button" class="btn btn-danger" 
+                    title="Удалить"
+                    data-bs-toggle="modal" 
+                    data-bs-target="#confirmDeleteModal"
+                    data-analysis-id="{{ analysis.id }}"
+                    data-client-surname="{{ analysis.client_surname }}"
+                    data-pet-name="{{ analysis.pet_name }}"
+                    data-analysis-type="{{ analysis.analysis_type }}"
+                    data-doctor-name="{{ analysis.doctor.name if analysis.doctor else 'Не указан' }}"
+                    data-patient-id="{{ analysis.patient_id or '' }}"
+                    data-created-at="{{ analysis.created_at.strftime('%d.%m.%Y %H:%M') }}"
+                    data-analysis-status="processed">
+                <i class="bi bi-trash"></i>
+            </button>
+            <form method="POST" action="{{ url_for('archive_analysis', analysis_id=analysis.id) }}" class="d-inline">
+                <input type="hidden" name="redirect_doctor_id" value="{{ selected_doctor or '' }}">
+                <input type="hidden" name="redirect_search" value="{{ search_query or '' }}">
+                <input type="hidden" name="redirect_date" value="{{ date_filter or '' }}">
+                <button type="submit" class="btn btn-secondary" title="Переместить в архив" onclick="return confirm('Переместить этот анализ в архив?')">
+                    <i class="bi bi-archive"></i>
+                </button>
+            </form>
+        </div>
+    </td>
+</tr>
+{% endmacro %}
+
+{% macro analysis_row_archived(analysis) %}
+<tr class="align-middle">
+    <td>
+        <span class="badge bg-secondary analysis-badge">
+            <i class="bi bi-archive me-1"></i>Архив
+        </span>
+    </td>
+    <td>
+        <strong>{{ analysis.doctor.name if analysis.doctor else 'Не указан' }}</strong>
+    </td>
+    <td>{{ analysis.client_surname }}</td>
+    <td>
+        <span class="badge bg-light text-dark border">
+            {{ analysis.pet_name }}
+        </span>
+    </td>
+    <td>
+        {{ analysis_badge(analysis.analysis_type) }}
+    </td>
+    <td>
+        {% if analysis.patient_id %}
+        <span class="badge patient-id-badge">
+            {{ analysis.patient_id }}
+        </span>
+        {% else %}
+        <span class="text-muted">—</span>
+        {% endif %}
+    </td>
+    <td>
+        <small class="text-muted">
+            {{ analysis.created_at.strftime('%d.%m.%Y %H:%M') }}
+        </small>
+    </td>
+    <td>
+        {% if analysis.call_date %}
+        <small class="text-muted">
+            {{ analysis.call_date.strftime('%d.%m.%Y %H:%M') }}
+            {% if now and analysis.call_date %}
+            <br><small class="days-ago">(~{{ ((now - analysis.call_date).days) }} д. назад)</small>
+            {% endif %}
+        </small>
+        {% else %}
+        <span class="text-muted">—</span>
+        {% endif %}
+    </td>
+    <td>
+        <div class="action-buttons-group">
+            <a href="{{ url_for('edit_analysis', analysis_id=analysis.id) }}" 
+               class="btn btn-primary" title="Редактировать">
+                <i class="bi bi-pencil"></i>
+            </a>
+            <button type="button" class="btn btn-danger" 
+                    title="Удалить"
+                    data-bs-toggle="modal" 
+                    data-bs-target="#confirmDeleteModal"
+                    data-analysis-id="{{ analysis.id }}"
+                    data-client-surname="{{ analysis.client_surname }}"
+                    data-pet-name="{{ analysis.pet_name }}"
+                    data-analysis-type="{{ analysis.analysis_type }}"
+                    data-doctor-name="{{ analysis.doctor.name if analysis.doctor else 'Не указан' }}"
+                    data-patient-id="{{ analysis.patient_id or '' }}"
+                    data-created-at="{{ analysis.created_at.strftime('%d.%m.%Y %H:%M') }}"
+                    data-analysis-status="archived">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+    </td>
+</tr>
+{% endmacro %}
+
 <html lang="ru" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
@@ -23,482 +264,10 @@
     <!-- Кастомные стили -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     
-    <style>
-        :root {
-            --malvin-blue: #1a365d;
-            --malvin-light-blue: #2c5282;
-            --malvin-accent: #ff770f;
-            --malvin-success: #ff770f;
-            --malvin-warning: #ed8936;
-            --malvin-danger: #dc3545;
-            --blood-color: #dc3545; /* Красный для крови */
-            --urine-color: #ffc107; /* Жёлтый для мочи */
-            --feces-color: #8B4513; /* Коричневый для кала */
-            --vet-union-color: #0d6efd; /* Синий для Вет Юнион */
-            --dermatology-color: #99ff99; /* HEX#99ff99 для дерматологии */
-            --manual-color: #8b00ff; /* HEX#8b00ff для добавленных вручную */
-            --archive-color: #6c757d; /* Серый для архива */
-        }
-        
-        .navbar-logo {
-            height: 40px;
-            margin-right: 10px;
-        }
-        
-        .stats-card {
-            border-left: 4px solid var(--malvin-accent);
-        }
-        
-        .analysis-badge {
-            font-size: 0.75rem;
-            padding: 0.25rem 0.5rem;
-        }
-        
-        /* Стили для цветов анализов */
-        .badge-blood {
-            background-color: var(--blood-color) !important;
-            border-color: var(--blood-color) !important;
-        }
-        
-        .badge-urine {
-            background-color: var(--urine-color) !important;
-            border-color: var(--urine-color) !important;
-            color: #212529 !important;
-        }
-        
-        .badge-feces {
-            background-color: var(--feces-color) !important;
-            border-color: var(--feces-color) !important;
-        }
-        
-        .badge-vet-union {
-            background-color: var(--vet-union-color) !important;
-            border-color: var(--vet-union-color) !important;
-        }
-        
-        .badge-dermatology {
-            background-color: var(--dermatology-color) !important;
-            border-color: var(--dermatology-color) !important;
-            color: #212529 !important;
-        }
-        
-        .badge-manual {
-            background-color: var(--manual-color) !important;
-            border-color: var(--manual-color) !important;
-        }
-        
-        .badge-cytology {
-            background-color: #17a2b8 !important;
-            border-color: #17a2b8 !important;
-        }
-        
-        .badge-histology {
-            background-color: #28a745 !important;
-            border-color: #28a745 !important;
-        }
-        
-        .badge-archive {
-            background-color: var(--archive-color) !important;
-            border-color: var(--archive-color) !important;
-        }
-        
-        .action-btn {
-            transition: all 0.2s ease;
-        }
-        
-        .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        
-        .doctor-progress {
-            height: 8px;
-            border-radius: 4px;
-        }
-        
-        .tab-content {
-            min-height: 400px;
-        }
-        
-        .empty-state {
-            padding: 4rem 2rem;
-            text-align: center;
-            color: #6c757d;
-        }
-        
-        .filter-card {
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            border: 1px solid rgba(0,0,0,0.1);
-        }
-        
-        .table tbody tr:hover {
-            background-color: rgba(255, 119, 15, 0.05);
-        }
-        
-        .date-input {
-            font-family: monospace;
-        }
-        
-        /* Стили для кнопок действий в таблице */
-        .action-buttons-group {
-            display: flex;
-            gap: 4px; /* Отступ между кнопками */
-        }
-        
-        .action-buttons-group .btn {
-            border-radius: 4px !important; /* Скругленные края для всех кнопок */
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-        }
-        
-        .action-buttons-group .btn-success {
-            background-color: #28a745;
-            border-color: #28a745;
-        }
-        
-        .action-buttons-group .btn-success:hover {
-            background-color: #218838;
-            border-color: #1e7e34;
-        }
-        
-        .action-buttons-group .btn-primary {
-            background-color: #007bff;
-            border-color: #007bff;
-        }
-        
-        .action-buttons-group .btn-primary:hover {
-            background-color: #0069d9;
-            border-color: #0062cc;
-        }
-        
-        .action-buttons-group .btn-danger {
-            background-color: #dc3545;
-            border-color: #dc3545;
-        }
-        
-        .action-buttons-group .btn-danger:hover {
-            background-color: #c82333;
-            border-color: #bd2130;
-        }
-        
-        .action-buttons-group .btn-secondary {
-            background-color: #6c757d;
-            border-color: #6c757d;
-        }
-        
-        .action-buttons-group .btn-secondary:hover {
-            background-color: #5a6268;
-            border-color: #545b62;
-        }
-        
-        /* Стили для выравнивания фильтров */
-        .filter-row {
-            align-items: center;
-            margin-bottom: 0;
-        }
-        
-        .filter-label {
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            font-size: 0.875rem;
-        }
-        
-        .filter-buttons {
-            height: 100%;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 1.5rem;
-        }
-        
-        .filter-buttons .btn {
-            height: 38px; /* Такая же высота как у инпутов */
-        }
-        
-        .reset-btn {
-            color: #dc3545 !important;
-            border-color: #dc3545 !important;
-            background-color: transparent !important;
-        }
-        
-        .reset-btn:hover {
-            background-color: #dc3545 !important;
-            color: white !important;
-        }
-        
-        /* Компактные стили для фильтров */
-        .compact-filters .col-md-3 {
-            padding-bottom: 0.5rem;
-        }
-        
-        /* Логотип в навбаре */
-        .navbar-brand-logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .navbar-brand-logo img {
-            height: 42px;
-            width: auto;
-            object-fit: contain;
-        }
-        
-        .navbar-brand-text {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .navbar-brand-text .brand-name {
-            font-weight: 700;
-            font-size: 1.2rem;
-            line-height: 1.2;
-        }
-        
-        .navbar-brand-text .brand-subtitle {
-            font-size: 0.75rem;
-            opacity: 0.8;
-            line-height: 1.2;
-        }
-        
-        /* Улучшенные вкладки с оранжевой линией */
-        .nav-tabs {
-            border-bottom: 2px solid #dee2e6;
-        }
-        
-        .nav-tabs .nav-link {
-            border-radius: 8px 8px 0 0;
-            padding: 12px 20px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            border: 1px solid transparent;
-            border-bottom: none;
-            position: relative;
-            margin-bottom: -1px;
-        }
-        
-        .nav-tabs .nav-link.active {
-            background-color: white;
-            border-color: #dee2e6 #dee2e6 white;
-            color: var(--malvin-blue);
-            font-weight: 600;
-        }
-        
-        .nav-tabs .nav-link.active::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background-color: var(--malvin-accent);
-            border-radius: 3px 3px 0 0;
-        }
-        
-        .nav-tabs .nav-link:not(.active):hover {
-            background-color: rgba(255, 119, 15, 0.05);
-            border-color: rgba(255, 119, 15, 0.2);
-        }
-        
-        /* Карточка быстрых действий */
-        .quick-actions-card .btn {
-            border-radius: 6px;
-            padding: 8px 16px;
-        }
-        
-        /* Общие стили для модальных окон подтверждения */
-        .confirm-modal-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-        
-        .confirm-modal-content {
-            border-radius: 12px;
-            overflow: hidden;
-            border: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-        
-        .confirm-modal-header {
-            border-bottom: none;
-            padding: 1.5rem;
-        }
-        
-        .confirm-modal-body {
-            padding: 2rem;
-            text-align: center;
-        }
-        
-        .confirm-modal-footer {
-            border-top: 1px solid #dee2e6;
-            padding: 1.5rem;
-            justify-content: center;
-            gap: 1rem;
-        }
-        
-        .analysis-details {
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin: 1.5rem 0;
-            text-align: left;
-        }
-        
-        .detail-row {
-            display: flex;
-            margin-bottom: 0.75rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid #e9ecef;
-        }
-        
-        .detail-row:last-child {
-            margin-bottom: 0;
-            padding-bottom: 0;
-            border-bottom: none;
-        }
-        
-        .detail-label {
-            font-weight: 600;
-            color: #495057;
-            min-width: 120px;
-        }
-        
-        .detail-value {
-            color: #212529;
-            flex-grow: 1;
-        }
-        
-        /* Специфичные стили для модального окна звонка */
-        .call-modal-header {
-            background: linear-gradient(135deg, var(--malvin-blue) 0%, var(--malvin-light-blue) 100%);
-            color: white;
-        }
-        
-        .call-modal-icon {
-            color: var(--malvin-accent);
-        }
-        
-        /* Специфичные стили для модального окна удаления */
-        .delete-modal-header {
-            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-            color: white;
-        }
-        
-        .delete-modal-icon {
-            color: #dc3545;
-        }
-        
-        .warning-text {
-            color: #dc3545;
-            font-weight: 600;
-        }
-        
-        .warning-note {
-            background-color: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 6px;
-            padding: 1rem;
-            margin: 1rem 0;
-            text-align: left;
-        }
-        
-        .warning-note i {
-            color: #856404;
-        }
-        
-        /* Липкая панель статистики */
-        .sticky-sidebar {
-            position: sticky;
-            top: 20px;
-            z-index: 100;
-            max-height: calc(100vh - 40px);
-            overflow-y: auto;
-        }
-        
-        .sticky-sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .sticky-sidebar::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 3px;
-        }
-        
-        .sticky-sidebar::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 3px;
-        }
-        
-        .sticky-sidebar::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8;
-        }
-        
-        /* Футер с разработчиком */
-        .footer-developer {
-            color: white !important;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            opacity: 0.9;
-        }
-        
-        .footer-developer:hover {
-            color: white !important;
-            opacity: 1;
-            text-decoration: none;
-        }
-        
-        /* Стили для информационного алерта в архиве */
-        .alert-archive-info {
-            border-left: 4px solid #6c757d;
-        }
-        
-        /* Медиа-запросы для адаптивности */
-        @media (max-width: 991.98px) {
-            .sticky-sidebar {
-                position: static;
-                max-height: none;
-                overflow-y: visible;
-            }
-            
-            .filter-buttons {
-                margin-top: 0;
-            }
-        }
-        
-        @media (max-width: 767.98px) {
-            .compact-filters .col-md-3 {
-                padding-bottom: 1rem;
-            }
-            
-            .filter-buttons {
-                justify-content: center;
-            }
-            
-            .nav-tabs .nav-link {
-                padding: 10px 15px;
-                font-size: 0.9rem;
-            }
-        }
-        
-        /* Стили для ID пациента */
-        .patient-id-badge {
-            font-size: 0.7rem;
-            padding: 0.2rem 0.4rem;
-            background-color: #6f42c1;
-            color: white;
-        }
-        
-        /* Стили для дней назад */
-        .days-ago {
-            font-size: 0.7rem;
-            opacity: 0.7;
-        }
-    </style>
+    <!-- Кастомные JS файлы -->
+    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/modals.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/filters.js') }}" defer></script>
 </head>
 <body>
     <!-- Навигация -->
@@ -712,93 +481,7 @@
                                 </thead>
                                 <tbody>
                                     {% for analysis in actual_analyses %}
-                                    <tr class="align-middle">
-                                        <td>
-                                            <span class="badge bg-warning analysis-badge">
-                                                <i class="bi bi-clock me-1"></i>Ожидает
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <strong>{{ analysis.doctor.name if analysis.doctor else 'Не указан' }}</strong>
-                                        </td>
-                                        <td>{{ analysis.client_surname }}</td>
-                                        <td>
-                                            <span class="badge bg-light text-dark border">
-                                                {{ analysis.pet_name }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            {% set analysis_colors = {
-                                                'Кровь': 'blood',
-                                                'Моча': 'urine', 
-                                                'Кал': 'feces',
-                                                'Цитология': 'cytology',
-                                                'Гистология': 'histology',
-                                                'Вет Юнион': 'vet-union',
-                                                'Дерматология': 'dermatology'
-                                            } %}
-                                            {% if analysis.analysis_type in analysis_colors %}
-                                            <span class="badge badge-{{ analysis_colors[analysis.analysis_type] }} analysis-badge">
-                                                {{ analysis.analysis_type }}
-                                            </span>
-                                            {% else %}
-                                            <span class="badge badge-manual analysis-badge">
-                                                {{ analysis.analysis_type }}
-                                            </span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if analysis.patient_id %}
-                                            <span class="badge patient-id-badge">
-                                                {{ analysis.patient_id }}
-                                            </span>
-                                            {% else %}
-                                            <span class="text-muted">—</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">
-                                                {{ analysis.created_at.strftime('%d.%m.%Y %H:%M') }}
-                                            </small>
-                                        </td>
-                                        <td>
-                                            <div class="action-buttons-group">
-                                                <!-- Кнопка для открытия модального окна подтверждения звонка -->
-                                                <button type="button" class="btn btn-success" 
-                                                        title="Отметить звонок"
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#confirmCallModal"
-                                                        data-analysis-id="{{ analysis.id }}"
-                                                        data-client-surname="{{ analysis.client_surname }}"
-                                                        data-pet-name="{{ analysis.pet_name }}"
-                                                        data-analysis-type="{{ analysis.analysis_type }}"
-                                                        data-doctor-name="{{ analysis.doctor.name if analysis.doctor else 'Не указан' }}"
-                                                        data-patient-id="{{ analysis.patient_id or '' }}"
-                                                        data-created-at="{{ analysis.created_at.strftime('%d.%m.%Y %H:%M') }}">
-                                                    <i class="bi bi-telephone"></i>
-                                                </button>
-                                                <a href="{{ url_for('edit_analysis', analysis_id=analysis.id) }}" 
-                                                   class="btn btn-primary" title="Редактировать">
-                                                    <i class="bi bi-pencil"></i>
-                                                </a>
-                                                <!-- Кнопка для открытия модального окна подтверждения удаления -->
-                                                <button type="button" class="btn btn-danger" 
-                                                        title="Удалить"
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#confirmDeleteModal"
-                                                        data-analysis-id="{{ analysis.id }}"
-                                                        data-client-surname="{{ analysis.client_surname }}"
-                                                        data-pet-name="{{ analysis.pet_name }}"
-                                                        data-analysis-type="{{ analysis.analysis_type }}"
-                                                        data-doctor-name="{{ analysis.doctor.name if analysis.doctor else 'Не указан' }}"
-                                                        data-patient-id="{{ analysis.patient_id or '' }}"
-                                                        data-created-at="{{ analysis.created_at.strftime('%d.%m.%Y %H:%M') }}"
-                                                        data-analysis-status="{{ analysis.status }}">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                        {{ analysis_row_actual(analysis) }}
                                     {% endfor %}
                                 </tbody>
                             </table>
@@ -834,101 +517,14 @@
                                         <th>Кличка</th>
                                         <th>Тип анализа</th>
                                         <th>ID</th>
+                                        <th width="150">Дата создания</th>
                                         <th width="150">Дата обработки</th>
                                         <th width="200">Действия</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for analysis in processed_analyses %}
-                                    <tr class="align-middle">
-                                        <td>
-                                            <span class="badge bg-success analysis-badge">
-                                                <i class="bi bi-check-circle me-1"></i>Обработан
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <strong>{{ analysis.doctor.name if analysis.doctor else 'Не указан' }}</strong>
-                                        </td>
-                                        <td>{{ analysis.client_surname }}</td>
-                                        <td>
-                                            <span class="badge bg-light text-dark border">
-                                                {{ analysis.pet_name }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            {% set analysis_colors = {
-                                                'Кровь': 'blood',
-                                                'Моча': 'urine', 
-                                                'Кал': 'feces',
-                                                'Цитология': 'cytology',
-                                                'Гистология': 'histology',
-                                                'Вет Юнион': 'vet-union',
-                                                'Дерматология': 'dermatology'
-                                            } %}
-                                            {% if analysis.analysis_type in analysis_colors %}
-                                            <span class="badge badge-{{ analysis_colors[analysis.analysis_type] }} analysis-badge">
-                                                {{ analysis.analysis_type }}
-                                            </span>
-                                            {% else %}
-                                            <span class="badge badge-manual analysis-badge">
-                                                {{ analysis.analysis_type }}
-                                            </span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if analysis.patient_id %}
-                                            <span class="badge patient-id-badge">
-                                                {{ analysis.patient_id }}
-                                            </span>
-                                            {% else %}
-                                            <span class="text-muted">—</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">
-                                                {% if analysis.call_date %}
-                                                {{ analysis.call_date.strftime('%d.%m.%Y %H:%M') }}
-                                                {% if now and analysis.call_date %}
-                                                <br><small class="days-ago">(~{{ ((now - analysis.call_date).days) }} д. назад)</small>
-                                                {% endif %}
-                                                {% else %}
-                                                Не указана
-                                                {% endif %}
-                                            </small>
-                                        </td>
-                                        <td>
-                                            <div class="action-buttons-group">
-                                                <a href="{{ url_for('edit_analysis', analysis_id=analysis.id) }}" 
-                                                   class="btn btn-primary" title="Редактировать">
-                                                    <i class="bi bi-pencil"></i>
-                                                </a>
-                                                <!-- Кнопка для открытия модального окна подтверждения удаления -->
-                                                <button type="button" class="btn btn-danger" 
-                                                        title="Удалить"
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#confirmDeleteModal"
-                                                        data-analysis-id="{{ analysis.id }}"
-                                                        data-client-surname="{{ analysis.client_surname }}"
-                                                        data-pet-name="{{ analysis.pet_name }}"
-                                                        data-analysis-type="{{ analysis.analysis_type }}"
-                                                        data-doctor-name="{{ analysis.doctor.name if analysis.doctor else 'Не указан' }}"
-                                                        data-patient-id="{{ analysis.patient_id or '' }}"
-                                                        data-created-at="{{ analysis.created_at.strftime('%d.%m.%Y %H:%M') }}"
-                                                        data-analysis-status="{{ analysis.status }}">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                                <!-- Кнопка перемещения в архив -->
-                                                <form method="POST" action="{{ url_for('archive_analysis', analysis_id=analysis.id) }}" class="d-inline">
-                                                    <input type="hidden" name="redirect_doctor_id" value="{{ selected_doctor or '' }}">
-                                                    <input type="hidden" name="redirect_search" value="{{ search_query or '' }}">
-                                                    <input type="hidden" name="redirect_date" value="{{ date_filter or '' }}">
-                                                    <button type="submit" class="btn btn-secondary" title="Переместить в архив" onclick="return confirm('Переместить этот анализ в архив?')">
-                                                        <i class="bi bi-archive"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                        {{ analysis_row_processed(analysis) }}
                                     {% endfor %}
                                 </tbody>
                             </table>
@@ -972,91 +568,7 @@
                                 </thead>
                                 <tbody>
                                     {% for analysis in archived_analyses %}
-                                    <tr class="align-middle">
-                                        <td>
-                                            <span class="badge bg-secondary analysis-badge">
-                                                <i class="bi bi-archive me-1"></i>Архив
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <strong>{{ analysis.doctor.name if analysis.doctor else 'Не указан' }}</strong>
-                                        </td>
-                                        <td>{{ analysis.client_surname }}</td>
-                                        <td>
-                                            <span class="badge bg-light text-dark border">
-                                                {{ analysis.pet_name }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            {% set analysis_colors = {
-                                                'Кровь': 'blood',
-                                                'Моча': 'urine', 
-                                                'Кал': 'feces',
-                                                'Цитология': 'cytology',
-                                                'Гистология': 'histology',
-                                                'Вет Юнион': 'vet-union',
-                                                'Дерматология': 'dermatology'
-                                            } %}
-                                            {% if analysis.analysis_type in analysis_colors %}
-                                            <span class="badge badge-{{ analysis_colors[analysis.analysis_type] }} analysis-badge">
-                                                {{ analysis.analysis_type }}
-                                            </span>
-                                            {% else %}
-                                            <span class="badge badge-manual analysis-badge">
-                                                {{ analysis.analysis_type }}
-                                            </span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if analysis.patient_id %}
-                                            <span class="badge patient-id-badge">
-                                                {{ analysis.patient_id }}
-                                            </span>
-                                            {% else %}
-                                            <span class="text-muted">—</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">
-                                                {{ analysis.created_at.strftime('%d.%m.%Y %H:%M') }}
-                                            </small>
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">
-                                                {% if analysis.call_date %}
-                                                {{ analysis.call_date.strftime('%d.%m.%Y %H:%M') }}
-                                                {% if now and analysis.call_date %}
-                                                <br><small class="days-ago">(~{{ ((now - analysis.call_date).days) }} д. назад)</small>
-                                                {% endif %}
-                                                {% else %}
-                                                Не указана
-                                                {% endif %}
-                                            </small>
-                                        </td>
-                                        <td>
-                                            <div class="action-buttons-group">
-                                                <a href="{{ url_for('edit_analysis', analysis_id=analysis.id) }}" 
-                                                   class="btn btn-primary" title="Редактировать">
-                                                    <i class="bi bi-pencil"></i>
-                                                </a>
-                                                <!-- Кнопка для открытия модального окна подтверждения удаления -->
-                                                <button type="button" class="btn btn-danger" 
-                                                        title="Удалить"
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#confirmDeleteModal"
-                                                        data-analysis-id="{{ analysis.id }}"
-                                                        data-client-surname="{{ analysis.client_surname }}"
-                                                        data-pet-name="{{ analysis.pet_name }}"
-                                                        data-analysis-type="{{ analysis.analysis_type }}"
-                                                        data-doctor-name="{{ analysis.doctor.name if analysis.doctor else 'Не указан' }}"
-                                                        data-patient-id="{{ analysis.patient_id or '' }}"
-                                                        data-created-at="{{ analysis.created_at.strftime('%d.%m.%Y %H:%M') }}"
-                                                        data-analysis-status="archived">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                        {{ analysis_row_archived(analysis) }}
                                     {% endfor %}
                                 </tbody>
                             </table>
@@ -1687,221 +1199,5 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Кастомный JS -->
-    <script>
-        // Активация вкладок при загрузке
-        document.addEventListener('DOMContentLoaded', function() {
-            // Сохраняем активную вкладку в localStorage
-            const tabEls = document.querySelectorAll('button[data-bs-toggle="tab"]');
-            tabEls.forEach(tab => {
-                tab.addEventListener('shown.bs.tab', function(event) {
-                    localStorage.setItem('activeTab', event.target.id);
-                });
-            });
-            
-            // Восстанавливаем активную вкладку
-            const activeTab = localStorage.getItem('activeTab');
-            if (activeTab) {
-                const tabTrigger = new bootstrap.Tab(document.getElementById(activeTab));
-                tabTrigger.show();
-            }
-            
-            // Автоматическое скрытие алертов через 5 секунд
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                setTimeout(() => {
-                    const bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
-                }, 5000);
-            });
-            
-            // Маска для ввода даты
-            const dateInput = document.querySelector('input[name="date"]');
-            if (dateInput) {
-                dateInput.addEventListener('input', function(e) {
-                    let value = e.target.value.replace(/\D/g, '');
-                    if (value.length > 2) {
-                        value = value.slice(0, 2) + '.' + value.slice(2);
-                    }
-                    if (value.length > 5) {
-                        value = value.slice(0, 5) + '.' + value.slice(5, 9);
-                    }
-                    e.target.value = value;
-                });
-                
-                // Подсказка с сегодняшней датой при фокусе
-                dateInput.addEventListener('focus', function() {
-                    if (!this.value) {
-                        const today = new Date();
-                        const day = String(today.getDate()).padStart(2, '0');
-                        const month = String(today.getMonth() + 1).padStart(2, '0');
-                        const year = today.getFullYear();
-                        const formattedDate = `${day}.${month}.${year}`;
-                        this.placeholder = 'Например: ' + formattedDate;
-                    }
-                });
-                
-                dateInput.addEventListener('blur', function() {
-                    this.placeholder = 'ДД.ММ.ГГГГ';
-                });
-            }
-            
-            // Если логотип не загрузился, показываем иконку
-            const logoImg = document.querySelector('.navbar-brand img');
-            if (logoImg) {
-                logoImg.addEventListener('error', function() {
-                    const fallback = document.createElement('div');
-                    fallback.className = 'd-flex align-items-center';
-                    fallback.innerHTML = '<i class="bi bi-heart-pulse fs-3 text-light me-2"></i>';
-                    this.parentNode.insertBefore(fallback, this);
-                    this.style.display = 'none';
-                });
-            }
-            
-            // Обработка модального окна подтверждения звонка
-            const confirmCallModal = document.getElementById('confirmCallModal');
-            if (confirmCallModal) {
-                confirmCallModal.addEventListener('show.bs.modal', function(event) {
-                    // Кнопка, которая вызвала модальное окно
-                    const button = event.relatedTarget;
-                    
-                    // Извлекаем информацию из data-* атрибутов
-                    const analysisId = button.getAttribute('data-analysis-id');
-                    const clientSurname = button.getAttribute('data-client-surname');
-                    const petName = button.getAttribute('data-pet-name');
-                    const analysisType = button.getAttribute('data-analysis-type');
-                    const doctorName = button.getAttribute('data-doctor-name');
-                    const patientId = button.getAttribute('data-patient-id');
-                    const createdAt = button.getAttribute('data-created-at');
-                    
-                    // Обновляем содержимое модального окна
-                    document.getElementById('modalCallAnalysisId').value = analysisId;
-                    document.getElementById('modalCallClientSurname').textContent = clientSurname;
-                    document.getElementById('modalCallPetName').textContent = petName;
-                    document.getElementById('modalCallAnalysisType').textContent = analysisType;
-                    document.getElementById('modalCallDoctorName').textContent = doctorName;
-                    document.getElementById('modalCallPatientId').textContent = patientId || '—';
-                    document.getElementById('modalCallCreatedAt').textContent = createdAt;
-                    
-                    // Обновляем action формы
-                    const form = document.getElementById('confirmCallForm');
-                    form.action = `/analysis/${analysisId}/mark_called`;
-                });
-                
-                // Обработка нажатия кнопки подтверждения
-                const confirmCallButton = document.getElementById('confirmCallButton');
-                if (confirmCallButton) {
-                    confirmCallButton.addEventListener('click', function() {
-                        document.getElementById('confirmCallForm').submit();
-                    });
-                }
-            }
-            
-            // Обработка модального окна подтверждения удаления
-            const confirmDeleteModal = document.getElementById('confirmDeleteModal');
-            if (confirmDeleteModal) {
-                confirmDeleteModal.addEventListener('show.bs.modal', function(event) {
-                    // Кнопка, которая вызвала модальное окно
-                    const button = event.relatedTarget;
-                    
-                    // Извлекаем информацию из data-* атрибутов
-                    const analysisId = button.getAttribute('data-analysis-id');
-                    const clientSurname = button.getAttribute('data-client-surname');
-                    const petName = button.getAttribute('data-pet-name');
-                    const analysisType = button.getAttribute('data-analysis-type');
-                    const doctorName = button.getAttribute('data-doctor-name');
-                    const patientId = button.getAttribute('data-patient-id');
-                    const createdAt = button.getAttribute('data-created-at');
-                    const analysisStatus = button.getAttribute('data-analysis-status');
-                    
-                    // Переводим статус на русский
-                    let statusText = 'Неизвестно';
-                    if (analysisStatus === 'actual') {
-                        statusText = 'Актуальный';
-                    } else if (analysisStatus === 'processed') {
-                        statusText = 'Обработанный';
-                    } else if (analysisStatus === 'archived') {
-                        statusText = 'Архивный';
-                    }
-                    
-                    // Обновляем содержимое модального окна
-                    document.getElementById('modalDeleteAnalysisId').value = analysisId;
-                    document.getElementById('modalDeleteClientSurname').textContent = clientSurname;
-                    document.getElementById('modalDeletePetName').textContent = petName;
-                    document.getElementById('modalDeleteAnalysisType').textContent = analysisType;
-                    document.getElementById('modalDeleteDoctorName').textContent = doctorName;
-                    document.getElementById('modalDeletePatientId').textContent = patientId || '—';
-                    document.getElementById('modalDeleteCreatedAt').textContent = createdAt;
-                    document.getElementById('modalDeleteAnalysisStatus').textContent = statusText;
-                    
-                    // Обновляем action формы
-                    const form = document.getElementById('confirmDeleteForm');
-                    form.action = `/analysis/${analysisId}/delete`;
-                });
-                
-                // Обработка нажатия кнопки подтверждения удаления
-                const confirmDeleteButton = document.getElementById('confirmDeleteButton');
-                if (confirmDeleteButton) {
-                    confirmDeleteButton.addEventListener('click', function() {
-                        document.getElementById('confirmDeleteForm').submit();
-                    });
-                }
-            }
-        });
-
-        // Проверка формы сброса базы данных
-        const resetDatabaseForm = document.getElementById('resetDatabaseForm');
-        if (resetDatabaseForm) {
-            const resetDatabaseButton = document.getElementById('resetDatabaseButton');
-            const confirmCheckbox = document.getElementById('confirmDelete');
-            
-            // Отключаем кнопку по умолчанию
-            resetDatabaseButton.disabled = true;
-            
-            // Включаем кнопку только при установленном чекбоксе
-            confirmCheckbox.addEventListener('change', function() {
-                resetDatabaseButton.disabled = !this.checked;
-            });
-            
-            // Валидация формы перед отправкой
-            resetDatabaseForm.addEventListener('submit', function(e) {
-                const password = this.querySelector('input[name="password"]').value;
-                const confirmPassword = this.querySelector('input[name="confirm_password"]').value;
-                const confirmation = this.querySelector('input[name="confirmation"]').value;
-                
-                // Проверка пароля
-                if (password !== 'FeirlyMoore_42') {
-                    alert('Неверный пароль!');
-                    e.preventDefault();
-                    return false;
-                }
-                
-                // Проверка совпадения паролей
-                if (password !== confirmPassword) {
-                    alert('Пароли не совпадают!');
-                    e.preventDefault();
-                    return false;
-                }
-                
-                // Проверка текстового подтверждения
-                if (confirmation.toLowerCase() !== 'сбросить базу данных') {
-                    alert('Неверное текстовое подтверждение! Введите: "сбросить базу данных"');
-                    e.preventDefault();
-                    return false;
-                }
-                
-                // Финальное подтверждение
-                if (!confirm('❗ ВНИМАНИЕ! Это действие удалит ВСЕ данные без возможности восстановления. Вы уверены?')) {
-                    e.preventDefault();
-                    return false;
-                }
-                
-                // Показать индикатор загрузки
-                resetDatabaseButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Сброс...';
-                resetDatabaseButton.disabled = true;
-            });
-        }
-    </script>
 </body>
 </html>
