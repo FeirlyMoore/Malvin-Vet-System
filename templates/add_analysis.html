@@ -238,14 +238,18 @@
                                 
                                 <!-- Поле для другого типа -->
                                 <div class="mt-3" id="customTypeField" style="display: none;">
-                                    <label for="custom_analysis_type" class="form-label">
-                                        Укажите свой тип анализа
+                                    <label for="custom_analysis_type" class="form-label required-field">
+                                        <i class="bi bi-pencil me-1"></i>Укажите свой тип анализа
                                     </label>
                                     <input type="text" 
                                            class="form-control" 
                                            id="custom_analysis_type" 
                                            name="custom_analysis_type"
-                                           placeholder="Введите тип анализа">
+                                           placeholder="Введите тип анализа"
+                                           value="{{ request.form.get('custom_analysis_type', '') }}">
+                                    <div class="validation-message" id="customTypeError" style="display: none;">
+                                        Пожалуйста, введите тип анализа
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -316,6 +320,7 @@
                                     <ul class="mb-0">
                                         <li>Все поля, отмеченные <span class="text-danger">*</span>, обязательны для заполнения</li>
                                         <li>Для быстрого выбора типа анализа используйте цветные кнопки выше</li>
+                                        <li>При выборе "Другое" обязательно укажите свой тип анализа</li>
                                         <li>ID пациента и примечания - необязательные поля</li>
                                         <li>Дата и время по умолчанию устанавливаются на текущие значения</li>
                                         <li>Нажмите "Сейчас" для автоматической установки текущего времени</li>

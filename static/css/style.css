@@ -4,6 +4,7 @@
     --malvin-blue: #1a365d;
     --malvin-light-blue: #2c5282;
     --malvin-accent: #38b2ac;
+    --malvin-accent-2 : #ff7f00;
     --malvin-success: #48bb78;
     --malvin-warning: #ed8936;
     --malvin-danger: #f56565;
@@ -384,7 +385,7 @@ h1, h2, h3, h4, h5, h6 {
     left: 0;
     right: 0;
     height: 3px;
-    background-color: var(--malvin-accent);
+    background-color: var(--malvin-accent-2);
     border-radius: 3px 3px 0 0;
 }
 
@@ -544,7 +545,7 @@ footer {
 }
 
 .stats-card {
-    border-left: 4px solid var(--malvin-accent);
+    border-left: 4px solid var(--malvin-accent-2);
 }
 
 .highlight {
