@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сброс базы данных - Malvin Vet</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand navbar-brand-logo" href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Malvin Vet Logo">
+                <div class="navbar-brand-text">
+                    <span class="brand-name text-light">Malvin Vet</span>
+                    <span class="brand-subtitle text-light">Сброс базы данных</span>
+                </div>
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('index') }}">
+                    <i class="bi bi-arrow-left me-1"></i>На главную
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-lg-6 mx-auto">
+                <!-- Уведомления -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show mb-4">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <!-- Карточка сброса -->
+                <div class="card border-danger">
+                    <div class="card-header bg-danger text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>Сброс базы данных
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-danger">
+                            <h6 class="alert-heading">
+                                <i class="bi bi-exclamation-octagon-fill me-2"></i>Внимание! Это опасная операция!
+                            </h6>
+                            <p class="mb-0">
+                                Это действие приведет к удалению всех анализов и врачей из базы данных. 
+                                Восстановить данные будет невозможно!
+                            </p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="mb-3">Будут удалены:</h6>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>
+                                        <i class="bi bi-clipboard-data text-danger me-2"></i>
+                                        Все анализы
+                                    </span>
+                                    <span class="badge bg-danger rounded-pill">{{ total_analyses + archived_count }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>
+                                        <i class="bi bi-person text-danger me-2"></i>
+                                        Все врачи
+                                    </span>
+                                    <span class="badge bg-danger rounded-pill">{{ doctors_count }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <form method="POST" action="{{ url_for('reset_database') }}" id="resetDatabaseForm">
+                            <div class="mb-3">
+                                <h6 class="mb-2">
+                                    <i class="bi bi-key me-2"></i>Введите пароль для подтверждения
+                                </h6>
+                                <input type="password" class="form-control mb-2" name="password" 
+                                       placeholder="Пароль" required>
+                                <input type="password" class="form-control" name="confirm_password" 
+                                       placeholder="Повторите пароль" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h6 class="mb-2">
+                                    <i class="bi bi-chat-square-text me-2"></i>Текстовое подтверждение
+                                </h6>
+                                <input type="text" class="form-control" name="confirmation" 
+                                       placeholder='Введите "сбросить базу данных"' required>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                                <label class="form-check-label text-danger" for="confirmDelete">
+                                    <strong>Я понимаю, что это действие необратимо и удалит все данные</strong>
+                                </label>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle me-1"></i>Отмена
+                                </a>
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="bi bi-trash3 me-1"></i>Сбросить базу данных
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.getElementById('resetDatabaseForm').addEventListener('submit', function(e) {
+            const password = document.querySelector('input[name="password"]').value;
+            const confirmPassword = document.querySelector('input[name="confirm_password"]').value;
+            const confirmation = document.querySelector('input[name="confirmation"]').value;
+            const confirmCheckbox = document.getElementById('confirmDelete');
+            
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Пароли не совпадают!');
+                return false;
+            }
+            
+            if (confirmation.toLowerCase() !== 'сбросить базу данных') {
+                e.preventDefault();
+                alert('Неверное текстовое подтверждение! Введите "сбросить базу данных"');
+                return false;
+            }
+            
+            if (!confirmCheckbox.checked) {
+                e.preventDefault();
+                alert('Вы должны подтвердить, что понимаете последствия этого действия!');
+                return false;
+            }
+            
+            return confirm('Вы уверены, что хотите сбросить всю базу данных? Это действие необратимо!');
+        });
+    </script>
+</body>
+</html>

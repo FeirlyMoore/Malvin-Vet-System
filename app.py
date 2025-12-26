@@ -1,14 +1,23 @@
 # app.py - оптимизированная версия системы учета анализов Malvin Vet
+import sys
+import io
+
+# Устанавливаем кодировку для вывода в консоль
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date, timedelta
+from werkzeug.security import generate_password_hash, check_password_hash
 import pandas as pd
 import os
 import csv
+import secrets
+import re
 from io import StringIO, BytesIO
 from functools import wraps
 import traceback
-import io
+import io as io_module
 
 # Конфигурация приложения
 class Config:
@@ -33,9 +42,14 @@ class Config:
         'Макаренко В.А.',
         'Без врача'
     ]
+    # Обычные учетные данные
     LOGIN_USERNAME = 'Malvin_42'
     LOGIN_PASSWORD = '585188'
     RESET_PASSWORD = 'FeirlyMoore_42'
+    
+    # Суперадмин (единственный, с особыми правами)
+    SUPER_ADMIN_USERNAME = 'Feirly_Moore'
+    SUPER_ADMIN_PASSWORD = '1029384756Ravent_42'
 
 # Инициализация приложения
 app = Flask(__name__)
@@ -48,11 +62,36 @@ for folder in [app.config['UPLOAD_FOLDER'], 'emergency_logs']:
 db = SQLAlchemy(app)
 
 # Модели данных
+class User(db.Model):
+    """Модель пользователя"""
+    __tablename__ = 'user'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), nullable=False, unique=True)
+    password_hash = db.Column(db.String(200), nullable=False)
+    role = db.Column(db.String(20), default='user')  # super_admin, admin, doctor, user
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_login = db.Column(db.DateTime)
+    is_active = db.Column(db.Boolean, default=True)
+
+class InviteCode(db.Model):
+    """Модель инвайт-кода"""
+    __tablename__ = 'invite_code'
+    id = db.Column(db.Integer, primary_key=True)
+    code = db.Column(db.String(20), nullable=False, unique=True)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime)
+    is_used = db.Column(db.Boolean, default=False)
+    used_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    used_at = db.Column(db.DateTime)
+    
+    created_by_user = db.relationship('User', foreign_keys=[created_by])
+    used_by_user = db.relationship('User', foreign_keys=[used_by])
+
 class Doctor(db.Model):
     """Модель врача"""
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, unique=True)
-    analyses = db.relationship('Analysis', backref='doctor_ref', lazy=True, cascade='all, delete-orphan')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 class Analysis(db.Model):
@@ -70,9 +109,60 @@ class Analysis(db.Model):
     doctor_id = db.Column(db.Integer, db.ForeignKey('doctor.id'), nullable=False)
     notes = db.Column(db.Text)
     
-    doctor = db.relationship('Doctor', backref='analysis_ref')
+    doctor = db.relationship('Doctor', backref='analyses')
 
 # Утилиты
+def generate_invite_code(length=10):
+    """Генерирует случайный инвайт-код"""
+    characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    return ''.join(secrets.choice(characters) for _ in range(length))
+
+def create_admin_users():
+    """Создает администраторов по умолчанию если их нет"""
+    try:
+        # Создаем суперадмина
+        super_admin = User.query.filter_by(username=Config.SUPER_ADMIN_USERNAME).first()
+        if not super_admin:
+            super_admin = User(
+                username=Config.SUPER_ADMIN_USERNAME,
+                password_hash=generate_password_hash(Config.SUPER_ADMIN_PASSWORD),
+                role='super_admin',
+                is_active=True
+            )
+            db.session.add(super_admin)
+            print(f"[SUCCESS] Создан суперадмин по умолчанию: {Config.SUPER_ADMIN_USERNAME}")
+        else:
+            # Обновляем пароль суперадмина, если он существует
+            super_admin.password_hash = generate_password_hash(Config.SUPER_ADMIN_PASSWORD)
+            super_admin.role = 'super_admin'
+            super_admin.is_active = True
+            print(f"[SUCCESS] Обновлен суперадмин: {Config.SUPER_ADMIN_USERNAME}")
+        
+        # Создаем обычного админа
+        admin = User.query.filter_by(username=Config.LOGIN_USERNAME).first()
+        if not admin:
+            admin = User(
+                username=Config.LOGIN_USERNAME,
+                password_hash=generate_password_hash(Config.LOGIN_PASSWORD),
+                role='admin',
+                is_active=True
+            )
+            db.session.add(admin)
+            print(f"[SUCCESS] Создан администратор по умолчанию: {Config.LOGIN_USERNAME}")
+        else:
+            # Обновляем пароль админа, если он существует
+            admin.password_hash = generate_password_hash(Config.LOGIN_PASSWORD)
+            admin.role = 'admin'
+            admin.is_active = True
+            print(f"[SUCCESS] Обновлен администратор: {Config.LOGIN_USERNAME}")
+        
+        db.session.commit()
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ERROR] Ошибка при создании администраторов: {str(e)}")
+        raise
+
 def log_emergency_call(analysis):
     """Создает лог-файл с информацией о звонке"""
     today = date.today().strftime('%Y-%m-%d')
@@ -96,6 +186,7 @@ ID ПАЦИЕНТА: {analysis.patient_id or 'Не указан'}
     except Exception as e:
         print(f'Ошибка при записи лога: {e}')
 
+# Декораторы для проверки прав
 def login_required(f):
     """Декоратор для проверки авторизации"""
     @wraps(f)
@@ -103,6 +194,86 @@ def login_required(f):
         if not session.get('logged_in'):
             flash('Пожалуйста, войдите в систему', 'warning')
             return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def admin_required(f):
+    """Декоратор для проверки прав администратора (admin или super_admin)"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('logged_in'):
+            flash('Пожалуйста, войдите в систему', 'warning')
+            return redirect(url_for('login'))
+        
+        user = User.query.filter_by(username=session.get('username')).first()
+        if not user or user.role not in ['admin', 'super_admin']:
+            flash('Доступ запрещен. Требуются права администратора', 'danger')
+            return redirect(url_for('index'))
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
+def super_admin_required(f):
+    """Декоратор для проверки прав суперадмина"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('logged_in'):
+            flash('Пожалуйста, войдите в систему', 'warning')
+            return redirect(url_for('login'))
+        
+        user = User.query.filter_by(username=session.get('username')).first()
+        if not user or user.role != 'super_admin':
+            flash('Доступ запрещен. Требуются права суперадминистратора', 'danger')
+            return redirect(url_for('index'))
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
+def doctor_or_admin_required(f):
+    """Декоратор для проверки прав врача или администратора"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('logged_in'):
+            flash('Пожалуйста, войдите в систему', 'warning')
+            return redirect(url_for('login'))
+        
+        user = User.query.filter_by(username=session.get('username')).first()
+        if not user or user.role not in ['doctor', 'admin', 'super_admin']:
+            flash('Доступ запрещен. Требуются права врача или администратора', 'danger')
+            return redirect(url_for('index'))
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
+def user_or_doctor_required(f):
+    """Декоратор для проверки прав обычного пользователя или врача"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('logged_in'):
+            flash('Пожалуйста, войдите в систему', 'warning')
+            return redirect(url_for('login'))
+        
+        user = User.query.filter_by(username=session.get('username')).first()
+        if not user or user.role not in ['user', 'doctor', 'admin', 'super_admin']:
+            flash('Доступ запрещен. Требуются права пользователя или врача', 'danger')
+            return redirect(url_for('index'))
+        
+        return f(*args, **kwargs)
+    return decorated_function
+
+def user_required(f):
+    """Декоратор для проверки прав любого пользователя"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('logged_in'):
+            flash('Пожалуйста, войдите в систему', 'warning')
+            return redirect(url_for('login'))
+        
+        user = User.query.filter_by(username=session.get('username')).first()
+        if not user:
+            flash('Доступ запрещен. Пользователь не найден', 'danger')
+            return redirect(url_for('index'))
+        
         return f(*args, **kwargs)
     return decorated_function
 
@@ -116,7 +287,10 @@ def initialize_database():
             db.session.add(doctor)
         
         db.session.commit()
-        print("✅ Созданы врачи по умолчанию")
+        print(f"[SUCCESS] Создано {len(Config.DEFAULT_DOCTORS)} врачей по умолчанию")
+    
+    # Создаем администраторов если их нет
+    create_admin_users()
 
 def apply_filters(query, search_term, date_filter):
     """Применяет фильтры поиска и даты к запросу"""
@@ -195,21 +369,329 @@ def login():
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '').strip()
         
-        if username == Config.LOGIN_USERNAME and password == Config.LOGIN_PASSWORD:
+        user = User.query.filter_by(username=username).first()
+        
+        if user and check_password_hash(user.password_hash, password) and user.is_active:
             session['logged_in'] = True
             session['username'] = username
-            flash('Добро пожаловать в систему учета анализов!', 'success')
+            session['role'] = user.role
+            user.last_login = datetime.utcnow()
+            db.session.commit()
+            
+            # Определяем тип приветствия в зависимости от роли
+            role_display = {
+                'super_admin': 'Суперадминистратор',
+                'admin': 'Администратор',
+                'doctor': 'Врач',
+                'user': 'Пользователь'
+            }.get(user.role, 'Пользователь')
+            
+            flash(f'Добро пожаловать, {role_display} {username}!', 'success')
             return redirect(url_for('index'))
         
-        flash('Неверные учетные данные.', 'danger')
+        flash('Неверные учетные данные или учетная запись неактивна.', 'danger')
     
     return render_template('login.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if session.get('logged_in'):
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        try:
+            username = request.form.get('username', '').strip()
+            password = request.form.get('password', '').strip()
+            confirm_password = request.form.get('confirm_password', '').strip()
+            invite_code = request.form.get('invite_code', '').strip().upper()
+            
+            # Валидация
+            if not all([username, password, confirm_password, invite_code]):
+                flash('Заполните все поля', 'danger')
+                return render_template('register.html')
+            
+            if password != confirm_password:
+                flash('Пароли не совпадают', 'danger')
+                return render_template('register.html')
+            
+            if len(password) < 6:
+                flash('Пароль должен содержать минимум 6 символов', 'danger')
+                return render_template('register.html')
+            
+            if len(username) < 3:
+                flash('Логин должен содержать минимум 3 символа', 'danger')
+                return render_template('register.html')
+            
+            if not re.match(r'^[a-zA-Z0-9_]+$', username):
+                flash('Логин может содержать только латинские буквы, цифры и подчеркивание', 'danger')
+                return render_template('register.html')
+            
+            # Проверка существующего пользователя
+            if User.query.filter_by(username=username).first():
+                flash('Пользователь с таким логином уже существует', 'danger')
+                return render_template('register.html')
+            
+            # Проверка инвайт-кода
+            invite = InviteCode.query.filter_by(code=invite_code, is_used=False).first()
+            if not invite:
+                flash('Неверный или уже использованный инвайт-код', 'danger')
+                return render_template('register.html')
+            
+            if invite.expires_at and invite.expires_at < datetime.utcnow():
+                flash('Срок действия инвайт-кода истек', 'danger')
+                return render_template('register.html')
+            
+            # Создание пользователя (только обычный пользователь)
+            user = User(
+                username=username,
+                password_hash=generate_password_hash(password),
+                role='user'  # Все новые пользователи - обычные
+            )
+            db.session.add(user)
+            db.session.flush()  # Получаем ID пользователя
+            
+            # Использование инвайт-кода
+            invite.is_used = True
+            invite.used_by = user.id
+            invite.used_at = datetime.utcnow()
+            
+            db.session.commit()
+            
+            flash('Регистрация успешна! Теперь вы можете войти в систему.', 'success')
+            return redirect(url_for('login'))
+        
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Ошибка при регистрации: {str(e)}', 'danger')
+    
+    return render_template('register.html')
 
 @app.route('/logout')
 def logout():
     session.clear()
     flash('Вы успешно вышли из системы', 'info')
     return redirect(url_for('login'))
+
+# Управление инвайт-кодами
+@app.route('/admin/invite_codes')
+@admin_required
+def admin_invite_codes():
+    """Страница управления инвайт-кодами"""
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    
+    invite_codes = InviteCode.query.order_by(InviteCode.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    return render_template('admin_invite_codes.html', 
+                         invite_codes=invite_codes, 
+                         now=datetime.utcnow())
+
+@app.route('/admin/generate_invite', methods=['POST'])
+@admin_required
+def generate_invite():
+    """Генерация нового инвайт-кода"""
+    try:
+        days_valid = request.form.get('days_valid', 7, type=int)
+        quantity = request.form.get('quantity', 1, type=int)
+        
+        if quantity < 1 or quantity > 50:
+            flash('Количество кодов должно быть от 1 до 50', 'danger')
+            return redirect(url_for('admin_invite_codes'))
+        
+        admin_user = User.query.filter_by(username=session.get('username')).first()
+        
+        generated_codes = []
+        for _ in range(quantity):
+            code = generate_invite_code()
+            
+            # Проверяем уникальность
+            while InviteCode.query.filter_by(code=code).first():
+                code = generate_invite_code()
+            
+            invite = InviteCode(
+                code=code,
+                created_by=admin_user.id,
+                expires_at=datetime.utcnow() + timedelta(days=days_valid) if days_valid > 0 else None
+            )
+            db.session.add(invite)
+            generated_codes.append(code)
+        
+        db.session.commit()
+        
+        flash(f'Сгенерировано {quantity} инвайт-кодов', 'success')
+        
+        # Возвращаем список сгенерированных кодов
+        session['generated_codes'] = generated_codes
+        return redirect(url_for('admin_invite_codes'))
+    
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ошибка при генерации кодов: {str(e)}', 'danger')
+        return redirect(url_for('admin_invite_codes'))
+
+@app.route('/admin/revoke_invite/<int:code_id>', methods=['POST'])
+@admin_required
+def revoke_invite(code_id):
+    """Отзыв инвайт-кода"""
+    try:
+        invite = InviteCode.query.get_or_404(code_id)
+        
+        if invite.is_used:
+            flash('Невозможно отозвать уже использованный код', 'warning')
+        else:
+            db.session.delete(invite)
+            db.session.commit()
+            flash('Инвайт-код успешно отозван', 'success')
+    
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ошибка при отзыве кода: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin_invite_codes'))
+
+# Управление пользователями
+@app.route('/admin/users')
+@admin_required
+def admin_users():
+    """Страница управления пользователями"""
+    users = User.query.order_by(
+        db.case(
+            (User.role == 'super_admin', 1),
+            (User.role == 'admin', 2),
+            (User.role == 'doctor', 3),
+            (User.role == 'user', 4),
+            else_=5
+        ),
+        User.created_at.desc()
+    ).all()
+    
+    return render_template('admin_users.html', users=users, now=datetime.utcnow())
+
+@app.route('/admin/user/<int:user_id>/toggle', methods=['POST'])
+@admin_required
+def toggle_user(user_id):
+    """Активация/деактивация пользователя"""
+    try:
+        current_user = User.query.filter_by(username=session.get('username')).first()
+        target_user = User.query.get_or_404(user_id)
+        
+        if target_user.username == session.get('username'):
+            flash('Нельзя отключить свою учетную запись', 'danger')
+            return redirect(url_for('admin_users'))
+        
+        # Проверка прав
+        if current_user.role == 'admin' and target_user.role in ['super_admin', 'admin']:
+            flash('Администратор не может изменять статус других администраторов или суперадмина', 'danger')
+            return redirect(url_for('admin_users'))
+        
+        target_user.is_active = not target_user.is_active
+        db.session.commit()
+        
+        status = "активирована" if target_user.is_active else "деактивирована"
+        flash(f'Учетная запись {target_user.username} {status}', 'success')
+    
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ошибка: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin/user/<int:user_id>/delete', methods=['POST'])
+@admin_required
+def delete_user(user_id):
+    """Удаление пользователя"""
+    try:
+        current_user = User.query.filter_by(username=session.get('username')).first()
+        target_user = User.query.get_or_404(user_id)
+        
+        if target_user.username == session.get('username'):
+            flash('Нельзя удалить свою учетную запись', 'danger')
+            return redirect(url_for('admin_users'))
+        
+        # Проверка прав
+        if current_user.role == 'admin' and target_user.role in ['super_admin', 'admin']:
+            flash('Администратор не может удалять других администраторов или суперадмина', 'danger')
+            return redirect(url_for('admin_users'))
+        
+        username = target_user.username
+        db.session.delete(target_user)
+        db.session.commit()
+        
+        flash(f'Пользователь {username} удален', 'success')
+    
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ошибка при удалении: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin/user/<int:user_id>/promote', methods=['POST'])
+@super_admin_required
+def promote_to_admin(user_id):
+    """Повышение пользователя до администратора (только для суперадмина)"""
+    try:
+        target_user = User.query.get_or_404(user_id)
+        
+        if target_user.role == 'super_admin':
+            flash('Нельзя изменить роль суперадмина', 'warning')
+        elif target_user.role == 'admin':
+            flash('Пользователь уже является администратором', 'info')
+        else:
+            target_user.role = 'admin'
+            db.session.commit()
+            flash(f'Пользователь {target_user.username} повышен до администратора', 'success')
+    
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ошибка при изменении роли: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin/user/<int:user_id>/demote', methods=['POST'])
+@super_admin_required
+def demote_to_user(user_id):
+    """Понижение администратора до обычного пользователя (только для суперадмина)"""
+    try:
+        target_user = User.query.get_or_404(user_id)
+        
+        if target_user.role == 'super_admin':
+            flash('Нельзя понизить суперадмина', 'warning')
+        elif target_user.role == 'user':
+            flash('Пользователь уже является обычным пользователем', 'info')
+        else:
+            target_user.role = 'user'
+            db.session.commit()
+            flash(f'Пользователь {target_user.username} понижен до обычного пользователя', 'success')
+    
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ошибка при изменении роли: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin/user/<int:user_id>/make_doctor', methods=['POST'])
+@super_admin_required
+def make_doctor(user_id):
+    """Назначение пользователя врачом (только для суперадмина)"""
+    try:
+        target_user = User.query.get_or_404(user_id)
+        
+        if target_user.role == 'super_admin':
+            flash('Нельзя изменить роль суперадмина', 'warning')
+        elif target_user.role == 'doctor':
+            flash('Пользователь уже является врачом', 'info')
+        else:
+            target_user.role = 'doctor'
+            db.session.commit()
+            flash(f'Пользователь {target_user.username} назначен врачом', 'success')
+    
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ошибка при изменении роли: {str(e)}', 'danger')
+    
+    return redirect(url_for('admin_users'))
 
 # Главная страница
 @app.route('/')
@@ -220,6 +702,12 @@ def index():
         doctor_id = request.args.get('doctor_id', type=int)
         search = request.args.get('search', '').strip()
         date_filter = request.args.get('date', '').strip()
+        
+        # Получаем текущего пользователя
+        current_user = User.query.filter_by(username=session.get('username')).first()
+        
+        # Получаем количество пользователей
+        users_count = User.query.count()
         
         # Рассчитываем границу для архивации
         week_ago = datetime.utcnow() - timedelta(days=7)
@@ -281,14 +769,19 @@ def index():
                              search_query=search,
                              date_filter=date_filter,
                              week_ago=week_ago,
-                             now=datetime.now())
+                             now=datetime.now(),
+                             users_count=users_count,
+                             user=current_user)
     
     except Exception as e:
         flash(f'Ошибка при загрузке данных: {str(e)}', 'danger')
-        print(f"Ошибка в функции index: {str(e)}")
+        print(f"[ERROR] Ошибка в функции index: {str(e)}")
         traceback.print_exc()
         
         # Возвращаем значения по умолчанию при ошибке
+        current_user = User.query.filter_by(username=session.get('username')).first() if session.get('username') else None
+        users_count = User.query.count()
+        
         return render_template('index.html', 
                               actual_analyses=[], 
                               processed_analyses=[], 
@@ -302,11 +795,13 @@ def index():
                               selected_doctor=None,
                               search_query='',
                               date_filter='',
-                              now=datetime.now())
+                              now=datetime.now(),
+                              users_count=users_count,
+                              user=current_user)
 
 # Обработка анализов
 @app.route('/analysis/<int:analysis_id>/mark_called', methods=['POST'])
-@login_required
+@user_or_doctor_required  # Могут врачи и обычные пользователи
 def mark_called(analysis_id):
     try:
         analysis = Analysis.query.get_or_404(analysis_id)
@@ -332,7 +827,7 @@ def mark_called(analysis_id):
     ))
 
 @app.route('/analysis/add', methods=['GET', 'POST'])
-@login_required
+@admin_required  # Только админы и суперадмины
 def add_analysis():
     doctors = Doctor.query.order_by(Doctor.name).all()
     
@@ -412,7 +907,7 @@ def add_analysis():
     return render_template('add_analysis.html', doctors=doctors)
 
 @app.route('/analysis/<int:analysis_id>/edit', methods=['GET', 'POST'])
-@login_required
+@user_or_doctor_required  # Могут врачи и обычные пользователи
 def edit_analysis(analysis_id):
     analysis = Analysis.query.get_or_404(analysis_id)
     doctors = Doctor.query.order_by(Doctor.name).all()
@@ -441,7 +936,7 @@ def edit_analysis(analysis_id):
     return render_template('edit_analysis.html', analysis=analysis, doctors=doctors)
 
 @app.route('/analysis/<int:analysis_id>/delete', methods=['POST'])
-@login_required
+@admin_required  # Только админы и суперадмины
 def delete_analysis(analysis_id):
     try:
         analysis = Analysis.query.get_or_404(analysis_id)
@@ -462,7 +957,7 @@ def delete_analysis(analysis_id):
     ))
 
 @app.route('/analysis/<int:analysis_id>/archive', methods=['POST'])
-@login_required
+@admin_required  # Только админы и суперадмины
 def archive_analysis(analysis_id):
     try:
         analysis = Analysis.query.get_or_404(analysis_id)
@@ -485,7 +980,7 @@ def archive_analysis(analysis_id):
     ))
 
 @app.route('/archive_old', methods=['POST'])
-@login_required
+@admin_required  # Только админы и суперадмины
 def archive_old():
     try:
         week_ago = datetime.utcnow() - timedelta(days=7)
@@ -564,7 +1059,7 @@ def parse_creation_time(time_str, current_datetime):
     return current_datetime
 
 @app.route('/upload', methods=['GET', 'POST'])
-@login_required
+@admin_required  # Только админы и суперадмины
 def upload_csv():
     if request.method == 'GET':
         return render_template('upload.html')
@@ -583,7 +1078,7 @@ def upload_csv():
             return redirect(url_for('upload_csv'))
         
         decoded_content = decode_csv_content(file_content)
-        csv_data = io.StringIO(decoded_content)
+        csv_data = io_module.StringIO(decoded_content)
         
         # Читаем первую строку для проверки
         first_line = csv_data.readline().strip()
@@ -702,9 +1197,9 @@ def upload_csv():
         # Формируем сообщение об успехе
         messages = []
         if added_count > 0:
-            messages.append(f"✅ Успешно добавлено {added_count} анализов")
+            messages.append(f"[SUCCESS] Успешно добавлено {added_count} анализов")
         else:
-            messages.append("⚠️ Не удалось добавить анализы")
+            messages.append("[WARNING] Не удалось добавить анализы")
         
         if skipped_duplicates > 0:
             messages.append(f"пропущено {skipped_duplicates} дубликатов")
@@ -725,7 +1220,7 @@ def upload_csv():
 
 # Логи
 @app.route('/logs')
-@login_required
+@user_or_doctor_required  # Могут все авторизованные пользователи
 def view_logs():
     log_files = []
     logs_dir = 'emergency_logs'
@@ -754,7 +1249,7 @@ def view_logs():
 
 # Экспорт данных
 @app.route('/export')
-@login_required
+@user_or_doctor_required  # Могут все авторизованные пользователи
 def export_data():
     try:
         analyses = Analysis.query.order_by(Analysis.created_at.desc()).all()
@@ -799,7 +1294,7 @@ def export_data():
 
 # API
 @app.route('/api/stats')
-@login_required
+@user_or_doctor_required  # Могут все авторизованные пользователи
 def api_stats():
     try:
         total = Analysis.query.count()
@@ -820,7 +1315,7 @@ def api_stats():
 
 # Управление врачами
 @app.route('/doctor/add', methods=['POST'])
-@login_required
+@admin_required  # Только админы и суперадмины
 def add_doctor():
     try:
         name = request.form.get('name', '').strip()
@@ -847,7 +1342,7 @@ def add_doctor():
 
 # Управление базой данных
 @app.route('/reset_all')
-@login_required 
+@admin_required  # Только админы и суперадмины
 def reset_all():
     try:
         analyses = Analysis.query.all()
@@ -865,7 +1360,7 @@ def reset_all():
     return redirect(url_for('index'))
 
 @app.route('/reset_database', methods=['POST'])
-@login_required
+@super_admin_required  # Только суперадмин
 def reset_database():
     try:
         password = request.form.get('password', '').strip()
@@ -899,12 +1394,73 @@ def reset_database():
         
         db.session.commit()
         
-        flash(f'✅ База данных успешно сброшена! Удалено {total_analyses} анализов и {total_doctors} врачей. Добавлено {len(Config.DEFAULT_DOCTORS)} врачей по умолчанию.', 'success')
+        flash(f'[SUCCESS] База данных успешно сброшена! Удалено {total_analyses} анализов и {total_doctors} врачей. Добавлено {len(Config.DEFAULT_DOCTORS)} врачей по умолчанию.', 'success')
         
     except Exception as e:
-        flash(f'❌ Ошибка при сбросе базы данных: {str(e)}', 'danger')
+        flash(f'[ERROR] Ошибка при сбросе базы данных: {str(e)}', 'danger')
     
     return redirect(url_for('index'))
+
+@app.route('/reset_database_page')
+@super_admin_required  # Только суперадмин
+def reset_database_page():
+    """Страница для сброса базы данных"""
+    current_user = User.query.filter_by(username=session.get('username')).first()
+    total_analyses = Analysis.query.count()
+    
+    # Подсчет архивных анализов
+    week_ago = datetime.utcnow() - timedelta(days=7)
+    archived_count = Analysis.query.filter(
+        db.and_(
+            Analysis.status == 'processed',
+            Analysis.call_date < week_ago
+        )
+    ).count()
+    
+    doctors_count = Doctor.query.count()
+    
+    return render_template('reset_database.html', 
+                         user=current_user,
+                         total_analyses=total_analyses,
+                         archived_count=archived_count,
+                         doctors_count=doctors_count)
+
+# Маршрут для пересоздания базы данных (отладка)
+@app.route('/reset_and_recreate', methods=['GET'])
+def reset_and_recreate():
+    """Сброс и пересоздание базы данных (для отладки)"""
+    try:
+        # Удаляем все таблицы
+        db.drop_all()
+        print("[INFO] Все таблицы удалены")
+        
+        # Создаем все таблицы заново
+        db.create_all()
+        print("[INFO] Все таблицы созданы заново")
+        
+        # Создаем врачей по умолчанию
+        if Doctor.query.count() == 0:
+            for doc_name in Config.DEFAULT_DOCTORS:
+                doctor = Doctor(name=doc_name)
+                db.session.add(doctor)
+            db.session.commit()
+            print(f"[SUCCESS] Создано {len(Config.DEFAULT_DOCTORS)} врачей по умолчанию")
+        
+        # Создаем администраторов
+        create_admin_users()
+        
+        return jsonify({
+            'success': True,
+            'message': 'База данных успешно пересоздана',
+            'super_admin': Config.SUPER_ADMIN_USERNAME,
+            'admin': Config.LOGIN_USERNAME
+        })
+    
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
 
 # Обработчики ошибок
 @app.errorhandler(404)
@@ -925,8 +1481,11 @@ if __name__ == '__main__':
     print("Система учета анализов Malvin Vet")
     print("=" * 60)
     print("Сервер запущен: http://localhost:5000")
-    print(f"Логин: {Config.LOGIN_USERNAME}")
-    print(f"Пароль: {Config.LOGIN_PASSWORD}")
+    print("Учетные данные:")
+    print(f"  Суперадмин: {Config.SUPER_ADMIN_USERNAME}")
+    print(f"  Пароль суперадмина: {Config.SUPER_ADMIN_PASSWORD}")
+    print(f"  Администратор: {Config.LOGIN_USERNAME}")
+    print(f"  Пароль администратора: {Config.LOGIN_PASSWORD}")
     print("=" * 60)
     
     app.run(debug=True, host='0.0.0.0', port=5000)

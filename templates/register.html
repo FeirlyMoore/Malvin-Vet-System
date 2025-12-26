@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ru" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация - Malvin Vet</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- Фавикон -->
+    <link rel="shortcut icon" href="https://static.tildacdn.com/tild3931-3964-4333-a139-616331303063/favicon.ico" type="image/x-icon"> 
+    <link rel="apple-touch-icon" href="https://static.tildacdn.com/tild6461-3331-4337-b635-306361643663/304.png"> 
+    <link rel="apple-touch-icon" sizes="76x76" href="https://static.tildacdn.com/tild6461-3331-4337-b635-306361643663/304.png"> 
+    <link rel="apple-touch-icon" sizes="152x152" href="https://static.tildacdn.com/tild6461-3331-4337-b635-306361643663/304.png"> 
+    <link rel="apple-touch-startup-image" href="https://static.tildacdn.com/tild6461-3331-4337-b635-306361643663/304.png"> 
+    <meta name="msapplication-TileColor" content="#000000"> 
+    <meta name="msapplication-TileImage" content="https://static.tildacdn.com/tild3061-3563-4638-a463-663764313862/540.png">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card" style="max-width: 450px;">
+            <div class="login-header">
+                <div class="logo">
+                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Malvin Vet Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" width="100">
+                </div>
+                <h2 class="mb-2">Регистрация</h2>
+                <p class="mb-0 opacity-75">Создание учетной записи</p>
+            </div>
+
+            <div class="login-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show mb-4" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <form method="POST" action="{{ url_for('register') }}" id="registerForm">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">
+                            <i class="bi bi-person-circle me-2"></i>Логин
+                        </label>
+                        <input type="text" class="form-control" id="username" name="username" 
+                               placeholder="Придумайте логин" required autofocus>
+                        <small class="text-muted">Минимум 3 символа, только латинские буквы и цифры</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">
+                            <i class="bi bi-key me-2"></i>Пароль
+                        </label>
+                        <input type="password" class="form-control" id="password" name="password" 
+                               placeholder="Придумайте пароль" required>
+                        <small class="text-muted">Минимум 6 символов</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">
+                            <i class="bi bi-key-fill me-2"></i>Подтверждение пароля
+                        </label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
+                               placeholder="Повторите пароль" required>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="invite_code" class="form-label">
+                            <i class="bi bi-ticket-perforated me-2"></i>Инвайт-код
+                        </label>
+                        <input type="text" class="form-control text-uppercase" id="invite_code" name="invite_code" 
+                               placeholder="Введите инвайт-код" required>
+                        <small class="text-muted">Код должен быть получен у администратора</small>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success w-100 py-2 mb-3">
+                        <i class="bi bi-person-plus me-2"></i>Зарегистрироваться
+                    </button>
+                    
+                    <div class="text-center">
+                        <a href="{{ url_for('login') }}" class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-arrow-left me-2"></i>Вернуться к входу
+                        </a>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="login-footer text-center py-3 bg-light">
+                <small class="text-muted">
+                    © 2025 Malvin Vet. Для регистрации требуется инвайт-код от администратора.
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Валидация формы -->
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            
+            // Проверка логина
+            if (username.length < 3) {
+                e.preventDefault();
+                alert('Логин должен содержать минимум 3 символа');
+                return false;
+            }
+            
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                e.preventDefault();
+                alert('Логин может содержать только латинские буквы, цифры и подчеркивание');
+                return false;
+            }
+            
+            // Проверка пароля
+            if (password.length < 6) {
+                e.preventDefault();
+                alert('Пароль должен содержать минимум 6 символов');
+                return false;
+            }
+            
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                alert('Пароли не совпадают');
+                return false;
+            }
+            
+            return true;
+        });
+        
+        // Автоматическое преобразование инвайт-кода в верхний регистр
+        document.getElementById('invite_code').addEventListener('input', function(e) {
+            this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        });
+    </script>
+</body>
+</html>

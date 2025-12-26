@@ -69,10 +69,11 @@
                     data-created-at="{{ analysis.created_at.strftime('%d.%m.%Y %H:%M') }}">
                 <i class="bi bi-telephone"></i>
             </button>
-            <a href="{{ url_for('edit_analysis', analysis_id=analysis.id) }}" 
+            <a href="{{ url_for('edit_analysis', analysis_id=analysis.id, doctor_id=selected_doctor, search=search_query, date=date_filter) }}" 
                class="btn btn-primary" title="Редактировать">
                 <i class="bi bi-pencil"></i>
             </a>
+            {% if session.role in ['admin', 'super_admin'] %}
             <button type="button" class="btn btn-danger" 
                     title="Удалить"
                     data-bs-toggle="modal" 
@@ -87,6 +88,7 @@
                     data-analysis-status="actual">
                 <i class="bi bi-trash"></i>
             </button>
+            {% endif %}
         </div>
     </td>
 </tr>
@@ -139,10 +141,11 @@
     </td>
     <td>
         <div class="action-buttons-group">
-            <a href="{{ url_for('edit_analysis', analysis_id=analysis.id) }}" 
+            <a href="{{ url_for('edit_analysis', analysis_id=analysis.id, doctor_id=selected_doctor, search=search_query, date=date_filter) }}" 
                class="btn btn-primary" title="Редактировать">
                 <i class="bi bi-pencil"></i>
             </a>
+            {% if session.role in ['admin', 'super_admin'] %}
             <button type="button" class="btn btn-danger" 
                     title="Удалить"
                     data-bs-toggle="modal" 
@@ -165,6 +168,7 @@
                     <i class="bi bi-archive"></i>
                 </button>
             </form>
+            {% endif %}
         </div>
     </td>
 </tr>
@@ -217,10 +221,11 @@
     </td>
     <td>
         <div class="action-buttons-group">
-            <a href="{{ url_for('edit_analysis', analysis_id=analysis.id) }}" 
+            <a href="{{ url_for('edit_analysis', analysis_id=analysis.id, doctor_id=selected_doctor, search=search_query, date=date_filter) }}" 
                class="btn btn-primary" title="Редактировать">
                 <i class="bi bi-pencil"></i>
             </a>
+            {% if session.role in ['admin', 'super_admin'] %}
             <button type="button" class="btn btn-danger" 
                     title="Удалить"
                     data-bs-toggle="modal" 
@@ -235,6 +240,7 @@
                     data-analysis-status="archived">
                 <i class="bi bi-trash"></i>
             </button>
+            {% endif %}
         </div>
     </td>
 </tr>
@@ -263,11 +269,9 @@
     
     <!-- Кастомные стили -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    
+
     <!-- Кастомные JS файлы -->
     <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/modals.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/filters.js') }}" defer></script>
 </head>
 <body>
     <!-- Навигация -->
@@ -295,6 +299,7 @@
                             <i class="bi bi-house-door me-1"></i>Главная
                         </a>
                     </li>
+                    {% if session.role in ['admin', 'super_admin'] %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('add_analysis') }}">
                             <i class="bi bi-plus-circle me-1"></i>Добавить анализ
@@ -305,6 +310,7 @@
                             <i class="bi bi-upload me-1"></i>Загрузить CSV
                         </a>
                     </li>
+                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('view_logs') }}">
                             <i class="bi bi-journal-text me-1"></i>Логи
@@ -318,6 +324,15 @@
                           data-bs-toggle="modal" data-bs-target="#userMenuModal">
                         <i class="bi bi-person-circle me-1"></i>
                         {{ session.username if session.username else 'Администратор' }}
+                        {% if session.role == 'super_admin' %}
+                        <span class="badge bg-danger ms-1">Super Admin</span>
+                        {% elif session.role == 'admin' %}
+                        <span class="badge bg-warning ms-1">Admin</span>
+                        {% elif session.role == 'doctor' %}
+                        <span class="badge bg-primary ms-1">Doctor</span>
+                        {% else %}
+                        <span class="badge bg-secondary ms-1">User</span>
+                        {% endif %}
                     </span>
                     <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">
                         <i class="bi bi-box-arrow-right me-1"></i>Выйти
@@ -406,18 +421,26 @@
                                     <i class="bi bi-lightning me-2"></i>Быстрые действия
                                 </h5>
                                 <div class="d-flex flex-wrap gap-2">
+                                    <!-- Для админов и суперадминов показываем кнопки добавления -->
+                                    {% if session.role in ['admin', 'super_admin'] %}
                                     <a href="{{ url_for('add_analysis') }}" class="btn btn-primary action-btn">
                                         <i class="bi bi-plus-circle me-2"></i>Добавить анализ
                                     </a>
                                     <a href="{{ url_for('upload_csv') }}" class="btn btn-success action-btn">
                                         <i class="bi bi-upload me-2"></i>Загрузить CSV
                                     </a>
+                                    {% endif %}
+                                    
+                                    <!-- Для всех авторизованных пользователей -->
                                     <a href="{{ url_for('view_logs') }}" class="btn btn-info action-btn text-light">
                                         <i class="bi bi-journal-text me-2"></i>Просмотр логов
                                     </a>
                                     <a href="{{ url_for('export_data') }}" class="btn btn-warning action-btn">
                                         <i class="bi bi-download me-2"></i>Экспорт данных
                                     </a>
+                                    
+                                    <!-- Только для админов и суперадминов -->
+                                    {% if session.role in ['admin', 'super_admin'] %}
                                     <button type="button" class="btn btn-outline-secondary action-btn" data-bs-toggle="modal" data-bs-target="#addDoctorModal">
                                         <i class="bi bi-person-plus me-2"></i>Добавить врача
                                     </button>
@@ -426,6 +449,7 @@
                                             <i class="bi bi-archive me-2"></i>Архивировать старые
                                         </button>
                                     </form>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -497,9 +521,11 @@
                                 Все анализы обработаны или добавьте новые
                                 {% endif %}
                             </p>
+                            {% if session.role in ['admin', 'super_admin'] %}
                             <a href="{{ url_for('add_analysis') }}" class="btn btn-primary mt-2">
                                 <i class="bi bi-plus-circle me-2"></i>Добавить анализ
                             </a>
+                            {% endif %}
                         </div>
                         {% endif %}
                     </div>
@@ -706,7 +732,7 @@
                                 
                                 {% if doctor_stats|selectattr('total', 'gt', 0)|list|length == 0 %}
                                 <div class="text-center py-4 text-muted">
-                                    <i class="bi bi-people display-6 mb-3"></i>
+                                    <i class="bi bi-people display-4 mb-3"></i>
                                     <p>Нет данных по врачам</p>
                                 </div>
                                 {% endif %}
@@ -749,6 +775,21 @@
                                     <small class="text-muted">
                                         <i class="bi bi-archive me-2"></i>
                                         Архивированные анализы: {{ archived_count }}
+                                    </small>
+                                </li>
+                                <li class="mt-3 pt-3 border-top">
+                                    <small class="text-muted">
+                                        <i class="bi bi-person me-2"></i>
+                                        Пользователь: {{ session.username }}
+                                        {% if session.role == 'super_admin' %}
+                                        <span class="badge bg-danger ms-1">Super Admin</span>
+                                        {% elif session.role == 'admin' %}
+                                        <span class="badge bg-warning ms-1">Admin</span>
+                                        {% elif session.role == 'doctor' %}
+                                        <span class="badge bg-primary ms-1">Doctor</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary ms-1">User</span>
+                                        {% endif %}
                                     </small>
                                 </li>
                             </ul>
@@ -929,7 +970,7 @@
         </div>
     </div>
 
-    <!-- Модальное окно пользователя со сбросом базы данных -->
+    <!-- Модальное окно пользователя -->
     <div class="modal fade" id="userMenuModal" tabindex="-1" aria-labelledby="userMenuModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -951,10 +992,39 @@
                                     <div class="mb-3">
                                         <small class="text-muted d-block">Имя пользователя</small>
                                         <strong>{{ session.username if session.username else 'Администратор' }}</strong>
+                                        {% if session.role == 'super_admin' %}
+                                        <span class="badge bg-danger ms-2">Суперадминистратор</span>
+                                        {% elif session.role == 'admin' %}
+                                        <span class="badge bg-warning ms-2">Администратор</span>
+                                        {% elif session.role == 'doctor' %}
+                                        <span class="badge bg-primary ms-2">Врач</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary ms-2">Пользователь</span>
+                                        {% endif %}
                                     </div>
                                     <div class="mb-3">
                                         <small class="text-muted d-block">Роль</small>
-                                        <span class="badge bg-primary">Администратор</span>
+                                        {% if session.role == 'super_admin' %}
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-shield-shaded me-1"></i>Суперадминистратор
+                                        </span>
+                                        {% elif session.role == 'admin' %}
+                                        <span class="badge bg-warning">
+                                            <i class="bi bi-shield me-1"></i>Администратор
+                                        </span>
+                                        {% elif session.role == 'doctor' %}
+                                        <span class="badge bg-primary">
+                                            <i class="bi bi-heart-pulse me-1"></i>Врач
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">
+                                            <i class="bi bi-person me-1"></i>Пользователь
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="mb-3">
+                                        <small class="text-muted d-block">Дата регистрации</small>
+                                        <strong>{{ user.created_at.strftime('%d.%m.%Y') if user else 'Неизвестно' }}</strong>
                                     </div>
                                     <div>
                                         <small class="text-muted d-block">Статус</small>
@@ -962,6 +1032,25 @@
                                     </div>
                                 </div>
                             </div>
+                            
+                            <!-- Административные функции (для админов и суперадминов) -->
+                            {% if session.role in ['admin', 'super_admin'] %}
+                            <div class="card border-0 shadow-sm mb-4">
+                                <div class="card-body">
+                                    <h6 class="card-title mb-3">
+                                        <i class="bi bi-shield-lock me-2"></i>Административные функции
+                                    </h6>
+                                    <div class="d-grid gap-2">
+                                        <a href="{{ url_for('admin_invite_codes') }}" class="btn btn-outline-primary">
+                                            <i class="bi bi-ticket-perforated me-2"></i>Управление инвайт-кодами
+                                        </a>
+                                        <a href="{{ url_for('admin_users') }}" class="btn btn-outline-info">
+                                            <i class="bi bi-people me-2"></i>Управление пользователями
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
                             
                             <div class="card border-0 shadow-sm">
                                 <div class="card-body">
@@ -997,7 +1086,8 @@
                                         Выполняйте их только при крайней необходимости.
                                     </p>
                                     
-                                    <!-- Сброс анализов в актуальные -->
+                                    <!-- Сброс анализов в актуальные - для админов и суперадминов -->
+                                    {% if session.role in ['admin', 'super_admin'] %}
                                     <div class="mb-3">
                                         <h6 class="mb-2">
                                             <i class="bi bi-arrow-clockwise me-2"></i>Сбросить все анализы
@@ -1011,10 +1101,12 @@
                                             </button>
                                         </form>
                                     </div>
+                                    {% endif %}
                                     
+                                    <!-- Полный сброс базы данных - только для суперадмина -->
+                                    {% if session.role == 'super_admin' %}
                                     <hr class="my-4">
                                     
-                                    <!-- Полный сброс базы данных -->
                                     <div>
                                         <h6 class="mb-2 text-danger">
                                             <i class="bi bi-trash3 me-2"></i>Полный сброс базы данных
@@ -1022,10 +1114,11 @@
                                         <p class="small text-danger mb-2">
                                             ⚠️ Удалит ВСЕ анализы и врачей, заменив врачей на список по умолчанию.
                                         </p>
-                                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#resetDatabaseModal">
+                                        <a href="{{ url_for('reset_database_page') }}" class="btn btn-danger">
                                             <i class="bi bi-trash3 me-1"></i>Сбросить базу данных
-                                        </button>
+                                        </a>
                                     </div>
+                                    {% endif %}
                                 </div>
                             </div>
                             
@@ -1045,6 +1138,24 @@
                                             <strong class="fs-5">{{ doctors|length }}</strong>
                                         </div>
                                     </div>
+                                    <div class="row mt-3">
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">Активных</small>
+                                            <strong class="fs-5">{{ actual_count }}</strong>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">Обработано</small>
+                                            <strong class="fs-5">{{ processed_count }}</strong>
+                                        </div>
+                                    </div>
+                                    {% if session.role in ['admin', 'super_admin'] %}
+                                    <div class="row mt-3">
+                                        <div class="col-12">
+                                            <small class="text-muted d-block">Пользователей</small>
+                                            <strong class="fs-5">{{ users_count if users_count else '0' }}</strong>
+                                        </div>
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -1060,85 +1171,7 @@
         </div>
     </div>
     
-    <!-- Модальное окно подтверждения сброса базы данных -->
-    <div class="modal fade" id="resetDatabaseModal" tabindex="-1" aria-labelledby="resetDatabaseModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title" id="resetDatabaseModalLabel">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Подтверждение сброса базы данных
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
-                </div>
-                <form method="POST" action="{{ url_for('reset_database') }}" id="resetDatabaseForm">
-                    <div class="modal-body">
-                        <div class="alert alert-danger">
-                            <h6 class="alert-heading">
-                                <i class="bi bi-exclamation-octagon-fill me-2"></i>Внимание! Это опасная операция!
-                            </h6>
-                            <p class="mb-0 small">
-                                Это действие приведет к удалению всех анализов и врачей из базы данных. 
-                                Восстановить данные будет невозможно!
-                            </p>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <h6 class="mb-3">Будут удалены:</h6>
-                            <ul class="list-group list-group-flush">
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span>
-                                        <i class="bi bi-clipboard-data text-danger me-2"></i>
-                                        Все анализы
-                                    </span>
-                                    <span class="badge bg-danger rounded-pill">{{ total_analyses + archived_count }}</span>
-                                </li>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span>
-                                        <i class="bi bi-person text-danger me-2"></i>
-                                        Все врачи
-                                    </span>
-                                    <span class="badge bg-danger rounded-pill">{{ doctors|length }}</span>
-                                </li>
-                            </ul>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <h6 class="mb-2">
-                                <i class="bi bi-key me-2"></i>Введите пароль для подтверждения
-                            </h6>
-                            <input type="password" class="form-control mb-2" name="password" 
-                                   placeholder="Пароль" required>
-                            <input type="password" class="form-control" name="confirm_password" 
-                                   placeholder="Повторите пароль" required>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <h6 class="mb-2">
-                                <i class="bi bi-chat-square-text me-2"></i>Текстовое подтверждение
-                            </h6>
-                            <input type="text" class="form-control" name="confirmation" 
-                                   placeholder='Введите "сбросить базу данных"' required>
-                        </div>
-                        
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" id="confirmDelete" required>
-                            <label class="form-check-label text-danger" for="confirmDelete">
-                                <strong>Я понимаю, что это действие необратимо и удалит все данные</strong>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                        <button type="submit" class="btn btn-danger" id="resetDatabaseButton">
-                            <i class="bi bi-trash3 me-1"></i>Сбросить базу данных
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Модальное окно смены пароля (заглушка) -->
+    <!-- Модальное окно смены пароля -->
     <div class="modal fade" id="changePasswordModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -1154,10 +1187,21 @@
                         Функция смены пароля временно недоступна. Обратитесь к системному администратору.
                     </div>
                     <p class="text-muted small">
-                        Текущие учетные данные:<br>
+                        Текущие учетные данные по умолчанию:<br>
+                        {% if session.role == 'super_admin' %}
+                        <strong>Логин:</strong> Feirly_Moore<br>
+                        <strong>Пароль:</strong> 1029384756Ravent_42
+                        {% else %}
                         <strong>Логин:</strong> Malvin_42<br>
                         <strong>Пароль:</strong> 585188
+                        {% endif %}
                     </p>
+                    {% if session.role in ['admin', 'super_admin'] %}
+                    <div class="alert alert-warning mt-3">
+                        <i class="bi bi-shield-exclamation me-2"></i>
+                        <strong>Для администраторов:</strong> Вы можете создавать инвайт-коды для регистрации новых пользователей.
+                    </div>
+                    {% endif %}
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Закрыть</button>
@@ -1186,10 +1230,17 @@
                 </div>
                 <div class="col-md-4 text-md-end">
                     <small class="text-light opacity-75">
-                        Версия 1.2 | 
+                        Версия 1.3 | 
                         <i class="bi bi-cpu ms-2 me-1"></i>Всего анализов: {{ total_analyses + archived_count }}
                         {% if selected_doctor or search_query or date_filter %}
                         <br><i class="bi bi-funnel ms-2 me-1"></i>Фильтры применены
+                        {% endif %}
+                        {% if session.role == 'super_admin' %}
+                        <br><i class="bi bi-shield-shaded ms-2 me-1"></i>Режим суперадминистратора
+                        {% elif session.role == 'admin' %}
+                        <br><i class="bi bi-shield-lock ms-2 me-1"></i>Режим администратора
+                        {% elif session.role == 'doctor' %}
+                        <br><i class="bi bi-heart-pulse ms-2 me-1"></i>Режим врача
                         {% endif %}
                     </small>
                 </div>
@@ -1199,5 +1250,102 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Скрипт для модальных окон -->
+    <script>
+        // Инициализация всех модальных окон
+        document.addEventListener('DOMContentLoaded', function() {
+            // Обработка модального окна подтверждения звонка
+            const confirmCallModal = document.getElementById('confirmCallModal');
+            if (confirmCallModal) {
+                confirmCallModal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const analysisId = button.getAttribute('data-analysis-id');
+                    const clientSurname = button.getAttribute('data-client-surname');
+                    const petName = button.getAttribute('data-pet-name');
+                    const analysisType = button.getAttribute('data-analysis-type');
+                    const doctorName = button.getAttribute('data-doctor-name');
+                    const patientId = button.getAttribute('data-patient-id');
+                    const createdAt = button.getAttribute('data-created-at');
+                    
+                    // Устанавливаем значения в модальном окне
+                    document.getElementById('modalCallAnalysisId').value = analysisId;
+                    document.getElementById('modalCallClientSurname').textContent = clientSurname;
+                    document.getElementById('modalCallPetName').textContent = petName;
+                    document.getElementById('modalCallAnalysisType').textContent = analysisType;
+                    document.getElementById('modalCallDoctorName').textContent = doctorName;
+                    document.getElementById('modalCallPatientId').textContent = patientId || 'Не указан';
+                    document.getElementById('modalCallCreatedAt').textContent = createdAt;
+                    
+                    // Устанавливаем action формы
+                    document.getElementById('confirmCallForm').action = `/analysis/${analysisId}/mark_called`;
+                });
+                
+                // Обработка кнопки подтверждения звонка
+                document.getElementById('confirmCallButton').addEventListener('click', function() {
+                    document.getElementById('confirmCallForm').submit();
+                });
+            }
+            
+            // Обработка модального окна подтверждения удаления
+            const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+            if (confirmDeleteModal) {
+                confirmDeleteModal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const analysisId = button.getAttribute('data-analysis-id');
+                    const clientSurname = button.getAttribute('data-client-surname');
+                    const petName = button.getAttribute('data-pet-name');
+                    const analysisType = button.getAttribute('data-analysis-type');
+                    const doctorName = button.getAttribute('data-doctor-name');
+                    const patientId = button.getAttribute('data-patient-id');
+                    const createdAt = button.getAttribute('data-created-at');
+                    const analysisStatus = button.getAttribute('data-analysis-status');
+                    
+                    // Устанавливаем значения в модальном окне
+                    document.getElementById('modalDeleteAnalysisId').value = analysisId;
+                    document.getElementById('modalDeleteClientSurname').textContent = clientSurname;
+                    document.getElementById('modalDeletePetName').textContent = petName;
+                    document.getElementById('modalDeleteAnalysisType').textContent = analysisType;
+                    document.getElementById('modalDeleteDoctorName').textContent = doctorName;
+                    document.getElementById('modalDeletePatientId').textContent = patientId || 'Не указан';
+                    document.getElementById('modalDeleteCreatedAt').textContent = createdAt;
+                    
+                    let statusText = '';
+                    switch(analysisStatus) {
+                        case 'actual':
+                            statusText = 'Актуальный';
+                            break;
+                        case 'processed':
+                            statusText = 'Обработанный';
+                            break;
+                        case 'archived':
+                            statusText = 'Архивный';
+                            break;
+                        default:
+                            statusText = 'Неизвестный';
+                    }
+                    document.getElementById('modalDeleteAnalysisStatus').textContent = statusText;
+                    
+                    // Устанавливаем action формы
+                    document.getElementById('confirmDeleteForm').action = `/analysis/${analysisId}/delete`;
+                });
+                
+                // Обработка кнопки подтверждения удаления
+                document.getElementById('confirmDeleteButton').addEventListener('click', function() {
+                    document.getElementById('confirmDeleteForm').submit();
+                });
+            }
+            
+            // Улучшенная обработка закрытия модальных окон
+            document.addEventListener('hidden.bs.modal', function(event) {
+                // Удаляем фокус с кнопок при закрытии модального окна
+                if (event.target.classList.contains('modal')) {
+                    setTimeout(function() {
+                        document.activeElement.blur();
+                    }, 100);
+                }
+            });
+        });
+    </script>
 </body>
 </html>

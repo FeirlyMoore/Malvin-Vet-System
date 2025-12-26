@@ -3,77 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход в систему - Malvin Vet</title>
+    <title>Вход - Malvin Vet Analytics</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-
-    <!-- Фавикон -->
-    <link rel="shortcut icon" href="https://static.tildacdn.com/tild3931-3964-4333-a139-616331303063/favicon.ico" type="image/x-icon"> 
-    <link rel="apple-touch-icon" href="https://static.tildacdn.com/tild6461-3331-4337-b635-306361643663/304.png"> 
-    <link rel="apple-touch-icon" sizes="76x76" href="https://static.tildacdn.com/tild6461-3331-4337-b635-306361643663/304.png"> 
-    <link rel="apple-touch-icon" sizes="152x152" href="https://static.tildacdn.com/tild6461-3331-4337-b635-306361643663/304.png"> 
-    <link rel="apple-touch-startup-image" href="https://static.tildacdn.com/tild6461-3331-4337-b635-306361643663/304.png"> 
-    <meta name="msapplication-TileColor" content="#000000"> 
-    <meta name="msapplication-TileImage" content="https://static.tildacdn.com/tild3061-3563-4638-a463-663764313862/540.png">
-
-    <!-- Кастомные стили -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <div class="login-container">
-        <div class="login-card">
-            <div class="login-header">
-                <div class="logo">
-                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Malvin Vet Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" width="100">
-                </div>
-                <h2 class="mb-2">Malvin Vet Analytics</h2>
-                <p class="mb-0 opacity-75">Система учета анализов</p>
-            </div>
-
-            <div class="login-body">
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      <div class="container">
+        <div class="row justify-content-center align-items-center min-vh-100">
+            <div class="col-md-6 col-lg-4">
+                <!-- Карточка входа -->
+                <div class="card shadow-lg border-0">
+                    <div class="card-header text-white text-center py-4" 
+                         style="background: linear-gradient(135deg, var(--malvin-blue) 0%, var(--malvin-light-blue) 100%);">
+                        <div class="d-flex justify-content-center align-items-center mb-3">
+                            <img src="{{ url_for('static', filename='logo.png') }}" alt="Malvin Vet Logo" height="50" class="me-3" onerror="this.style.display='none'">
+                            <div>
+                                <h4 class="mb-0">Malvin Vet</h4>
+                                <small>Analytics System</small>
                             </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-                
-                <form method="POST" action="{{ url_for('login') }}">
-                    <div class="mb-3">
-                        <label for="username" class="form-label">
-                            <i class="bi bi-person-circle me-2"></i>Логин
-                        </label>
-                        <input type="text" class="form-control" id="username" name="username" 
-                               placeholder="Введите логин" required autofocus>
+                        </div>
                     </div>
                     
-                    <div class="mb-4">
-                        <label for="password" class="form-label">
-                            <i class="bi bi-key me-2"></i>Пароль
-                        </label>
-                        <input type="password" class="form-control" id="password" name="password" 
-                               placeholder="Введите пароль" required>
+                    <div class="card-body p-4">
+                        <!-- Уведомления -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ category }} alert-dismissible fade show mb-4">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+                        
+                        <h4 class="text-center mb-4">Вход в систему</h4>
+                        
+                        <form method="POST" action="{{ url_for('login') }}">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Имя пользователя</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-person"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="username" name="username" 
+                                           placeholder="Введите логин" required autofocus>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="password" class="form-label">Пароль</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-lock"></i>
+                                    </span>
+                                    <input type="password" class="form-control" id="password" name="password" 
+                                           placeholder="Введите пароль" required>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid mb-3">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-box-arrow-in-right me-2"></i>Войти
+                                </button>
+                            </div>
+                            
+                            <div class="text-center mb-4">
+                                <small class="text-muted">
+                                    Нет аккаунта? 
+                                    <a href="{{ url_for('register') }}" class="text-decoration-none">Зарегистрироваться</a>
+                                </small>
+                            </div>
+                        </form>                    
+                    <div class="login-footer text-center py-3 bg-light">
+                        <small class="text-muted">
+                            © 2025 Malvin Vet. Все права защищены.
+                        </small>
                     </div>
-                    
-                    <button type="submit" class="btn btn-primary w-100 py-2 mb-3">
-                        <i class="bi bi-box-arrow-in-right me-2"></i>Войти в систему
-                    </button>
-                </form>
-            </div>
-            
-            <div class="login-footer text-center py-3 bg-light">
-                <small class="text-muted">
-                    © 2025 Malvin Vet. Все права защищены.
-                </small>
+                </div>
             </div>
         </div>
     </div>
-    
+</div>    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
