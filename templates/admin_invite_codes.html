@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ru" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление инвайт-кодами - Malvin Vet</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand navbar-brand-logo" href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Malvin Vet Logo" onerror="this.style.display='none'">
+                <div class="navbar-brand-text">
+                    <span class="brand-name text-light">Malvin Vet</span>
+                    <span class="brand-subtitle text-light">Управление инвайт-кодами</span>
+                </div>
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('index') }}">
+                    <i class="bi bi-arrow-left me-1"></i>На главную
+                </a>
+                <a class="nav-link" href="{{ url_for('admin_users') }}">
+                    <i class="bi bi-people me-1"></i>Пользователи
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <!-- Уведомления -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show mb-4">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <!-- Показать сгенерированные коды если есть -->
+                {% if session.get('generated_codes') %}
+                <div class="card mb-4 border-success">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-check-circle me-2"></i>Сгенерированные коды
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3">Скопируйте эти коды и передайте пользователям:</p>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            {% for code in session.pop('generated_codes', []) %}
+                            <span class="badge bg-primary fs-6 p-2">{{ code }}</span>
+                            {% endfor %}
+                        </div>
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Коды автоматически удалятся из системы через 30 дней
+                        </small>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Форма генерации кодов -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-plus-circle me-2"></i>Генерация новых кодов
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('generate_invite') }}">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Количество кодов</label>
+                                    <input type="number" class="form-control" name="quantity" 
+                                           value="1" min="1" max="50" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Срок действия (дней)</label>
+                                    <input type="number" class="form-control" name="days_valid" 
+                                           value="7" min="1" max="365">
+                                    <small class="text-muted">0 = бессрочно</small>
+                                </div>
+                                <div class="col-12">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-magic me-2"></i>Сгенерировать коды
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Список кодов -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-list-ul me-2"></i>Список инвайт-кодов
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if invite_codes.items %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Код</th>
+                                        <th>Статус</th>
+                                        <th>Создан</th>
+                                        <th>Истекает</th>
+                                        <th>Использован</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for code in invite_codes.items %}
+                                    <tr>
+                                        <td>
+                                            <code class="fs-5">{{ code.code }}</code>
+                                        </td>
+                                        <td>
+                                            {% if code.is_used %}
+                                            <span class="badge bg-secondary">Использован</span>
+                                            {% elif code.expires_at and code.expires_at < now %}
+                                            <span class="badge bg-danger">Просрочен</span>
+                                            {% else %}
+                                            <span class="badge bg-success">Активен</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small>{{ code.created_at.strftime('%d.%m.%Y %H:%M') }}</small><br>
+                                            <small class="text-muted">{% if code.created_by_user %}{{ code.created_by_user.username }}{% endif %}</small>
+                                        </td>
+                                        <td>
+                                            {% if code.expires_at %}
+                                            <small>{{ code.expires_at.strftime('%d.%m.%Y') }}</small>
+                                            {% else %}
+                                            <span class="text-muted">Бессрочно</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if code.is_used %}
+                                            <small>{{ code.used_at.strftime('%d.%m.%Y %H:%M') }}</small><br>
+                                            <small class="text-muted">{% if code.used_by_user %}{{ code.used_by_user.username }}{% endif %}</small>
+                                            {% else %}
+                                            <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if not code.is_used %}
+                                            <form method="POST" action="{{ url_for('revoke_invite', code_id=code.id) }}" 
+                                                  class="d-inline" onsubmit="return confirm('Отозвать этот инвайт-код?')">
+                                                <button type="submit" class="btn btn-sm btn-danger">
+                                                    <i class="bi bi-x-circle"></i>
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Пагинация -->
+                        {% if invite_codes.pages > 1 %}
+                        <nav aria-label="Навигация по страницам">
+                            <ul class="pagination justify-content-center">
+                                {% if invite_codes.has_prev %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin_invite_codes', page=invite_codes.prev_num) }}">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for page_num in invite_codes.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                                    {% if page_num %}
+                                        <li class="page-item {% if page_num == invite_codes.page %}active{% endif %}">
+                                            <a class="page-link" href="{{ url_for('admin_invite_codes', page=page_num) }}">{{ page_num }}</a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if invite_codes.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin_invite_codes', page=invite_codes.next_num) }}">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                        
+                        {% else %}
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-ticket display-4 mb-3"></i>
+                            <p>Нет созданных инвайт-кодов</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="httpscdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

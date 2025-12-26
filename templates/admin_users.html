@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ru" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление пользователями - Malvin Vet</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand navbar-brand-logo" href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Malvin Vet Logo">
+                <div class="navbar-brand-text">
+                    <span class="brand-name text-light">Malvin Vet</span>
+                    <span class="brand-subtitle text-light">Управление пользователями</span>
+                </div>
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('index') }}">
+                    <i class="bi bi-arrow-left me-1"></i>На главную
+                </a>
+                <a class="nav-link" href="{{ url_for('admin_invite_codes') }}">
+                    <i class="bi bi-ticket-perforated me-1"></i>Инвайт-коды
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <!-- Уведомления -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show mb-4">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <!-- Статистика -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card text-white bg-primary">
+                            <div class="card-body text-center">
+                                <h2 class="mb-0">{{ users|length }}</h2>
+                                <small>Всего пользователей</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-white bg-success">
+                            <div class="card-body text-center">
+                                <h2 class="mb-0">{{ users|selectattr('is_active')|list|length }}</h2>
+                                <small>Активных</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-white bg-danger">
+                            <div class="card-body text-center">
+                                <h2 class="mb-0">{{ users|selectattr('role', 'equalto', 'super_admin')|list|length }}</h2>
+                                <small>Суперадминов</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-white bg-warning">
+                            <div class="card-body text-center">
+                                <h2 class="mb-0">{{ users|selectattr('role', 'equalto', 'admin')|list|length }}</h2>
+                                <small>Администраторов</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Список пользователей -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-people me-2"></i>Список пользователей
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if users %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Логин</th>
+                                        <th>Роль</th>
+                                        <th>Статус</th>
+                                        <th>Создан</th>
+                                        <th>Последний вход</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                    <tr class="{% if user.role == 'super_admin' %}table-danger{% elif user.role == 'admin' %}table-warning{% endif %}">
+                                        <td>#{{ user.id }}</td>
+                                        <td>
+                                            <strong>{{ user.username }}</strong>
+                                            {% if user.username == session.username %}
+                                            <span class="badge bg-info ms-2">Вы</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if user.role == 'super_admin' %}
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-shield-shaded me-1"></i>Суперадмин
+                                            </span>
+                                            {% elif user.role == 'admin' %}
+                                            <span class="badge bg-warning">
+                                                <i class="bi bi-shield me-1"></i>Администратор
+                                            </span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">
+                                                <i class="bi bi-person me-1"></i>Пользователь
+                                            </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if user.is_active %}
+                                            <span class="badge bg-success">Активен</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">Неактивен</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small>{{ user.created_at.strftime('%d.%m.%Y') }}</small>
+                                        </td>
+                                        <td>
+                                            {% if user.last_login %}
+                                            <small>{{ user.last_login.strftime('%d.%m.%Y %H:%M') }}</small>
+                                            {% else %}
+                                            <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if user.username != session.username %}
+                                                {% if session.role == 'super_admin' %}
+                                                    <!-- Суперадмин может управлять всеми, кроме себя -->
+                                                    {% if user.role != 'super_admin' %}
+                                                        <!-- Активация/деактивация -->
+                                                        <form method="POST" action="{{ url_for('toggle_user', user_id=user.id) }}" 
+                                                              class="d-inline" onsubmit="return confirm('{% if user.is_active %}Деактивировать{% else %}Активировать{% endif %} пользователя?')">
+                                                            <button type="submit" class="btn btn-sm {% if user.is_active %}btn-warning{% else %}btn-success{% endif %}">
+                                                                <i class="bi bi-{% if user.is_active %}toggle-off{% else %}toggle-on{% endif %}"></i>
+                                                            </button>
+                                                        </form>
+                                                        
+                                                        <!-- Управление ролью -->
+                                                        {% if user.role == 'admin' %}
+                                                        <form method="POST" action="{{ url_for('demote_to_user', user_id=user.id) }}" 
+                                                              class="d-inline" onsubmit="return confirm('Понизить {{ user.username }} до обычного пользователя?')">
+                                                            <button type="submit" class="btn btn-sm btn-info" title="Понизить до пользователя">
+                                                                <i class="bi bi-arrow-down"></i>
+                                                            </button>
+                                                        </form>
+                                                        {% elif user.role == 'user' %}
+                                                        <form method="POST" action="{{ url_for('promote_to_admin', user_id=user.id) }}" 
+                                                              class="d-inline" onsubmit="return confirm('Повысить {{ user.username }} до администратора?')">
+                                                            <button type="submit" class="btn btn-sm btn-info" title="Повысить до администратора">
+                                                                <i class="bi bi-arrow-up"></i>
+                                                            </button>
+                                                        </form>
+                                                        {% endif %}
+                                                        
+                                                        <!-- Удаление -->
+                                                        <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}" 
+                                                              class="d-inline" onsubmit="return confirm('Удалить пользователя {{ user.username }}? Это действие нельзя отменить.')">
+                                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    {% else %}
+                                                        <span class="text-muted">Суперадмин</span>
+                                                    {% endif %}
+                                                {% elif session.role == 'admin' %}
+                                                    <!-- Админ может управлять только обычными пользователями -->
+                                                    {% if user.role == 'user' %}
+                                                        <!-- Активация/деактивация -->
+                                                        <form method="POST" action="{{ url_for('toggle_user', user_id=user.id) }}" 
+                                                              class="d-inline" onsubmit="return confirm('{% if user.is_active %}Деактивировать{% else %}Активировать{% endif %} пользователя?')">
+                                                            <button type="submit" class="btn btn-sm {% if user.is_active %}btn-warning{% else %}btn-success{% endif %}">
+                                                                <i class="bi bi-{% if user.is_active %}toggle-off{% else %}toggle-on{% endif %}"></i>
+                                                            </button>
+                                                        </form>
+                                                        
+                                                        <!-- Удаление -->
+                                                        <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}" 
+                                                              class="d-inline" onsubmit="return confirm('Удалить пользователя {{ user.username }}? Это действие нельзя отменить.')">
+                                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    {% else %}
+                                                        <span class="text-muted">Только просмотр</span>
+                                                    {% endif %}
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">Ваш аккаунт</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Информация о правах -->
+                        <div class="alert alert-info mt-4">
+                            <h6><i class="bi bi-info-circle me-2"></i>Информация о правах доступа:</h6>
+                            <ul class="mb-0">
+                                <li><span class="badge bg-danger">Суперадмин</span> - Полный доступ, может назначать администраторов</li>
+                                <li><span class="badge bg-warning">Администратор</span> - Полный доступ к системе, кроме назначения администраторов</li>
+                                <li><span class="badge bg-secondary">Пользователь</span> - Обычный доступ к функциям системы</li>
+                            </ul>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-people display-4 mb-3"></i>
+                            <p>Нет зарегистрированных пользователей</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
